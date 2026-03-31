@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "EcoAlert",
+    "slug": "ecoalert",
+    "version": "1.0.0",
+    "scheme": "ecoalert",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a6b3a"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1a6b3a"
+      },
+      "package": "com.ecoalert.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

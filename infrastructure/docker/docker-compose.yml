@@ -1,0 +1,49 @@
+name: ecoalert
+
+services:
+
+  # ─────────────────────────────────────────────
+  # Base de datos MySQL
+  # ─────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: ecoalert_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecoalert_db
+      MYSQL_USER: ecoalert_user
+      MYSQL_PASSWORD: ecoalert_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../../infrastructure/mysql/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────────
+  # Backend Node.js + Express
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: ecoalert_backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../../backend/.env
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
