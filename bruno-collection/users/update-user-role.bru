@@ -1,0 +1,21 @@
+meta {
+  name: Update User Role
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/users/{{user_id}}/role
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "id_rol": "<pega aquí el UUID del rol desde DBeaver>"
+  }
+}

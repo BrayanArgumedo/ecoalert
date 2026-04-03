@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { config } from './config';
 import authRouter from './features/auth/auth.router';
+import usersRouter from './features/users/users.router';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', usersRouter);
 
 // TODO: registrar rutas de cada módulo aquí a medida que se implementen
 // app.use('/api/v1/users', usersRouter);
