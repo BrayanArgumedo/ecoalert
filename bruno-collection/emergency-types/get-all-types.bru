@@ -1,0 +1,15 @@
+meta {
+  name: Get All Emergency Types
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/emergency-types
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
