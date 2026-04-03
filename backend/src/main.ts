@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { config } from './config';
+import authRouter from './features/auth/auth.router';
 
 dotenv.config();
 
@@ -17,8 +18,9 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'EcoAlert API running', env: config.env });
 });
 
+app.use('/api/v1/auth', authRouter);
+
 // TODO: registrar rutas de cada módulo aquí a medida que se implementen
-// app.use('/api/v1/auth', authRouter);
 // app.use('/api/v1/users', usersRouter);
 // app.use('/api/v1/incidents', incidentsRouter);
 // app.use('/api/v1/emergency-types', emergencyTypesRouter);
