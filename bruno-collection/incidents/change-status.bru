@@ -1,0 +1,21 @@
+meta {
+  name: Change Status
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/incidents/{{incident_id}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "estado": "en_proceso"
+  }
+}

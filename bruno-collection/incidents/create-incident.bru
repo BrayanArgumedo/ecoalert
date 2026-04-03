@@ -1,0 +1,33 @@
+meta {
+  name: Create Incident
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/incidents
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "id_tipo_emergencia": "<uuid del tipo de emergencia>",
+    "descripcion": "Inundación severa en el sector norte, varias familias afectadas",
+    "direccion": "Calle 5 #10-20, Barrio Centro",
+    "latitud": 8.7534,
+    "longitud": -75.8812,
+    "id_servicios": ["<uuid servicio bomberos>", "<uuid servicio policia>"],
+    "es_comunitario": false
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("incident_id", res.body.data.id_incidencia);
+  }
+}
