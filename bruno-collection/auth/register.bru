@@ -1,0 +1,20 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nombre": "Juan Pérez",
+    "correo": "juan@ecoalert.com",
+    "contrasena": "Test1234!",
+    "localidad": "Barrio Centro"
+  }
+}
