@@ -1,3 +1,5 @@
+name: ecoalert-mobile
+
 services:
 
   # ─────────────────────────────────────────────
@@ -7,7 +9,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ecoalert_mobile
+    container_name: ecoalert-mobile
     ports:
       - "8081:8081"
       - "19000:19000"

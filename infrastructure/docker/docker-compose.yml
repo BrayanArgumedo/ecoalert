@@ -7,7 +7,7 @@ services:
   # ─────────────────────────────────────────────
   mysql:
     image: mysql:8.0
-    container_name: ecoalert_mysql
+    container_name: ecoalert-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -32,7 +32,7 @@ services:
     build:
       context: ../../backend
       dockerfile: Dockerfile
-    container_name: ecoalert_backend
+    container_name: ecoalert-backend
     restart: unless-stopped
     ports:
       - "3000:3000"

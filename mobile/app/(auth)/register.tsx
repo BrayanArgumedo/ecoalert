@@ -8,7 +8,6 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Image,
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,25 +17,27 @@ import { useAuthStore } from '../../src/core/stores/authStore';
 import AnimatedBackground from '../../src/shared/components/AnimatedBackground';
 import InputField from '../../src/shared/components/InputField';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { register } = useAuthStore();
 
+  const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [localidad, setLocalidad] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!correo.trim() || !contrasena.trim()) {
-      Alert.alert('Campos requeridos', 'Ingresa tu correo y contraseña');
+  const handleRegister = async () => {
+    if (!nombre.trim() || !correo.trim() || !contrasena.trim()) {
+      Alert.alert('Campos requeridos', 'Nombre, correo y contraseña son obligatorios');
       return;
     }
     setLoading(true);
     try {
-      await login(correo.trim(), contrasena);
+      await register(nombre.trim(), correo.trim(), contrasena, localidad.trim() || undefined);
       router.replace('/(tabs)/home');
     } catch {
-      Alert.alert('Acceso denegado', 'Correo o contraseña incorrectos');
+      Alert.alert('Error al registrarse', 'El correo ya está en uso o hubo un problema');
     } finally {
       setLoading(false);
     }
@@ -46,13 +47,11 @@ export default function LoginScreen() {
     <View style={{ flex: 1 }}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Fondo degradado base */}
       <LinearGradient
         colors={['#030d06', '#071a0d', '#0a2714', '#0f3d1e']}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
-      {/* Orbes animados */}
       <AnimatedBackground />
 
       <KeyboardAvoidingView
@@ -65,18 +64,17 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo y título */}
-          <View style={{ alignItems: 'center', marginBottom: 40 }}>
-            <Image
-              source={require('../../assets/images/logoEcoaler.png')}
-              style={{ width: 120, height: 60, resizeMode: 'contain' }}
-            />
-            <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, marginTop: 8, letterSpacing: 2, textTransform: 'uppercase' }}>
-              Emergencias ambientales
+          {/* Header */}
+          <View style={{ alignItems: 'center', marginBottom: 32 }}>
+            <Text style={{ color: 'white', fontSize: 28, fontWeight: '800', letterSpacing: 0.5 }}>
+              Crea tu cuenta
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginTop: 6 }}>
+              Únete a la red de respuesta ambiental
             </Text>
           </View>
 
-          {/* Card glassmorphism */}
+          {/* Card */}
           <BlurView
             intensity={25}
             tint="dark"
@@ -89,12 +87,14 @@ export default function LoginScreen() {
           >
             <View style={{ padding: 28, backgroundColor: 'rgba(10,30,16,0.55)' }}>
 
-              <Text style={{ color: 'white', fontSize: 26, fontWeight: '700', marginBottom: 4 }}>
-                Bienvenido
-              </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginBottom: 28 }}>
-                Inicia sesión para continuar
-              </Text>
+              <InputField
+                icon="person-outline"
+                label="Nombre completo"
+                placeholder="Tu nombre"
+                value={nombre}
+                onChangeText={setNombre}
+                autoCapitalize="words"
+              />
 
               <InputField
                 icon="mail-outline"
@@ -109,15 +109,22 @@ export default function LoginScreen() {
               <InputField
                 icon="lock-closed-outline"
                 label="Contraseña"
-                placeholder="••••••••"
+                placeholder="Mínimo 8 caracteres"
                 value={contrasena}
                 onChangeText={setContrasena}
                 secureTextEntry
               />
 
-              {/* Botón */}
+              <InputField
+                icon="location-outline"
+                label="Localidad (opcional)"
+                placeholder="Ej: Barrio Centro"
+                value={localidad}
+                onChangeText={setLocalidad}
+              />
+
               <TouchableOpacity
-                onPress={handleLogin}
+                onPress={handleRegister}
                 disabled={loading}
                 activeOpacity={0.85}
                 style={{ marginTop: 8 }}
@@ -137,20 +144,19 @@ export default function LoginScreen() {
                     <ActivityIndicator color="white" />
                   ) : (
                     <Text style={{ color: 'white', fontWeight: '700', fontSize: 16, letterSpacing: 0.5 }}>
-                      Iniciar sesión
+                      Crear cuenta
                     </Text>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* Registro */}
               <TouchableOpacity
-                onPress={() => router.push('/(auth)/register')}
+                onPress={() => router.back()}
                 style={{ marginTop: 20, alignItems: 'center' }}
               >
                 <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
-                  ¿No tienes cuenta?{' '}
-                  <Text style={{ color: '#2d9e57', fontWeight: '600' }}>Regístrate</Text>
+                  ¿Ya tienes cuenta?{' '}
+                  <Text style={{ color: '#2d9e57', fontWeight: '600' }}>Inicia sesión</Text>
                 </Text>
               </TouchableOpacity>
 
