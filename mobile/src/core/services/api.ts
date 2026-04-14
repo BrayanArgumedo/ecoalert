@@ -1,7 +1,11 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { EventEmitter } from 'eventemitter3';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
+
+// Bus de eventos para notificar sesión expirada sin dependencia circular con authStore
+export const authEvents = new EventEmitter();
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -40,9 +44,11 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        // Refresh falló — limpiar sesión
+        // Refresh falló — limpiar sesión y notificar a la app
         await SecureStore.deleteItemAsync('access_token');
         await SecureStore.deleteItemAsync('refresh_token');
+        await SecureStore.deleteItemAsync('user');
+        authEvents.emit('session-expired');
       }
     }
 

@@ -35,8 +35,9 @@ export default function LoginScreen() {
     try {
       await login(correo.trim(), contrasena);
       router.replace('/(tabs)/home');
-    } catch {
-      Alert.alert('Acceso denegado', 'Correo o contraseña incorrectos');
+    } catch (err: any) {
+      const message = err?.response?.data?.message ?? 'Correo o contraseña incorrectos';
+      Alert.alert('Acceso denegado', message);
     } finally {
       setLoading(false);
     }

@@ -36,8 +36,9 @@ export default function RegisterScreen() {
     try {
       await register(nombre.trim(), correo.trim(), contrasena, localidad.trim() || undefined);
       router.replace('/(tabs)/home');
-    } catch {
-      Alert.alert('Error al registrarse', 'El correo ya está en uso o hubo un problema');
+    } catch (err: any) {
+      const message = err?.response?.data?.message ?? 'El correo ya está en uso o hubo un problema';
+      Alert.alert('Error al registrarse', message);
     } finally {
       setLoading(false);
     }
