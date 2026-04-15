@@ -11,6 +11,7 @@ interface InputFieldProps {
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   label?: string;
+  error?: string;
 }
 
 export default function InputField({
@@ -22,11 +23,12 @@ export default function InputField({
   keyboardType = 'default',
   autoCapitalize = 'sentences',
   label,
+  error,
 }: InputFieldProps) {
   const [visible, setVisible] = useState(!secureTextEntry);
 
   return (
-    <View className="mb-4">
+    <View style={{ marginBottom: 16 }}>
       {label && (
         <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 6, marginLeft: 2 }}>
           {label}
@@ -39,12 +41,17 @@ export default function InputField({
           backgroundColor: 'rgba(255,255,255,0.08)',
           borderRadius: 14,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.15)',
+          borderColor: error ? 'rgba(248,113,113,0.7)' : 'rgba(255,255,255,0.15)',
           paddingHorizontal: 14,
           height: 52,
         }}
       >
-        <Ionicons name={icon} size={18} color="rgba(255,255,255,0.5)" style={{ marginRight: 10 }} />
+        <Ionicons
+          name={icon}
+          size={18}
+          color={error ? 'rgba(248,113,113,0.8)' : 'rgba(255,255,255,0.5)'}
+          style={{ marginRight: 10 }}
+        />
         <TextInput
           style={{ flex: 1, color: 'white', fontSize: 15 }}
           placeholder={placeholder}
@@ -65,6 +72,11 @@ export default function InputField({
           </TouchableOpacity>
         )}
       </View>
+      {error && (
+        <Text style={{ color: '#f87171', fontSize: 12, marginTop: 5, marginLeft: 4 }}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }

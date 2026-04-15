@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   Image,
   StatusBar,
 } from 'react-native';
@@ -25,19 +24,36 @@ export default function LoginScreen() {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [contrasenaError, setContrasenaError] = useState('');
 
   const handleLogin = async () => {
+    setError('');
+    setContrasenaError('');
+
     if (!correo.trim() || !contrasena.trim()) {
-      Alert.alert('Campos requeridos', 'Ingresa tu correo y contraseña');
+      setError('Ingresa tu correo y contraseña para continuar.');
       return;
     }
+
+    if (contrasena.length < 8) {
+      setContrasenaError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
     setLoading(true);
     try {
       await login(correo.trim(), contrasena);
       router.replace('/(tabs)/home');
     } catch (err: any) {
-      const message = err?.response?.data?.message ?? 'Correo o contraseña incorrectos';
-      Alert.alert('Acceso denegado', message);
+      const status = err?.response?.status;
+      if (status === 401) {
+        setError(err?.response?.data?.message ?? 'Correo o contraseña incorrectos.');
+      } else if (status >= 500) {
+        setError('Error en el servidor. Intenta de nuevo más tarde.');
+      } else {
+        setError('No se pudo conectar. Verifica tu conexión.');
+      }
     } finally {
       setLoading(false);
     }
@@ -47,13 +63,11 @@ export default function LoginScreen() {
     <View style={{ flex: 1 }}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Fondo degradado base */}
       <LinearGradient
         colors={['#030d06', '#071a0d', '#0a2714', '#0f3d1e']}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
 
-      {/* Orbes animados */}
       <AnimatedBackground />
 
       <KeyboardAvoidingView
@@ -66,7 +80,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo y título */}
+          {/* Logo */}
           <View style={{ alignItems: 'center', marginBottom: 40 }}>
             <Image
               source={require('../../assets/images/logoEcoaler.png')}
@@ -77,7 +91,7 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          {/* Card glassmorphism */}
+          {/* Card */}
           <BlurView
             intensity={25}
             tint="dark"
@@ -102,7 +116,7 @@ export default function LoginScreen() {
                 label="Correo electrónico"
                 placeholder="correo@ejemplo.com"
                 value={correo}
-                onChangeText={setCorreo}
+                onChangeText={(v) => { setCorreo(v); setError(''); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -112,16 +126,33 @@ export default function LoginScreen() {
                 label="Contraseña"
                 placeholder="••••••••"
                 value={contrasena}
-                onChangeText={setContrasena}
+                onChangeText={(v) => { setContrasena(v); setContrasenaError(''); setError(''); }}
                 secureTextEntry
+                error={contrasenaError}
               />
 
-              {/* Botón */}
+              {/* Mensaje de error inline */}
+              {error !== '' && (
+                <View style={{
+                  backgroundColor: 'rgba(220,38,38,0.15)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(220,38,38,0.4)',
+                  borderRadius: 10,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  marginBottom: 12,
+                }}>
+                  <Text style={{ color: '#f87171', fontSize: 13, textAlign: 'center' }}>
+                    {error}
+                  </Text>
+                </View>
+              )}
+
               <TouchableOpacity
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}
-                style={{ marginTop: 8 }}
+                style={{ marginTop: 4 }}
               >
                 <LinearGradient
                   colors={['#1a6b3a', '#2d9e57']}
@@ -144,7 +175,6 @@ export default function LoginScreen() {
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* Registro */}
               <TouchableOpacity
                 onPress={() => router.push('/(auth)/register')}
                 style={{ marginTop: 20, alignItems: 'center' }}

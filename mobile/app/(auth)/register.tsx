@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -26,19 +25,36 @@ export default function RegisterScreen() {
   const [contrasena, setContrasena] = useState('');
   const [localidad, setLocalidad] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [contrasenaError, setContrasenaError] = useState('');
 
   const handleRegister = async () => {
+    setError('');
+    setContrasenaError('');
+
     if (!nombre.trim() || !correo.trim() || !contrasena.trim()) {
-      Alert.alert('Campos requeridos', 'Nombre, correo y contraseña son obligatorios');
+      setError('Nombre, correo y contraseña son obligatorios.');
       return;
     }
+
+    if (contrasena.length < 8) {
+      setContrasenaError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
     setLoading(true);
     try {
       await register(nombre.trim(), correo.trim(), contrasena, localidad.trim() || undefined);
       router.replace('/(tabs)/home');
     } catch (err: any) {
-      const message = err?.response?.data?.message ?? 'El correo ya está en uso o hubo un problema';
-      Alert.alert('Error al registrarse', message);
+      const status = err?.response?.status;
+      if (status === 400) {
+        setError(err?.response?.data?.message ?? 'El correo ya está en uso.');
+      } else if (status >= 500) {
+        setError('Error en el servidor. Intenta de nuevo más tarde.');
+      } else {
+        setError('No se pudo conectar. Verifica tu conexión.');
+      }
     } finally {
       setLoading(false);
     }
@@ -93,7 +109,7 @@ export default function RegisterScreen() {
                 label="Nombre completo"
                 placeholder="Tu nombre"
                 value={nombre}
-                onChangeText={setNombre}
+                onChangeText={(v) => { setNombre(v); setError(''); }}
                 autoCapitalize="words"
               />
 
@@ -102,7 +118,7 @@ export default function RegisterScreen() {
                 label="Correo electrónico"
                 placeholder="correo@ejemplo.com"
                 value={correo}
-                onChangeText={setCorreo}
+                onChangeText={(v) => { setCorreo(v); setError(''); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -112,8 +128,9 @@ export default function RegisterScreen() {
                 label="Contraseña"
                 placeholder="Mínimo 8 caracteres"
                 value={contrasena}
-                onChangeText={setContrasena}
+                onChangeText={(v) => { setContrasena(v); setContrasenaError(''); setError(''); }}
                 secureTextEntry
+                error={contrasenaError}
               />
 
               <InputField
@@ -124,11 +141,28 @@ export default function RegisterScreen() {
                 onChangeText={setLocalidad}
               />
 
+              {/* Mensaje de error inline */}
+              {error !== '' && (
+                <View style={{
+                  backgroundColor: 'rgba(220,38,38,0.15)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(220,38,38,0.4)',
+                  borderRadius: 10,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  marginBottom: 12,
+                }}>
+                  <Text style={{ color: '#f87171', fontSize: 13, textAlign: 'center' }}>
+                    {error}
+                  </Text>
+                </View>
+              )}
+
               <TouchableOpacity
                 onPress={handleRegister}
                 disabled={loading}
                 activeOpacity={0.85}
-                style={{ marginTop: 8 }}
+                style={{ marginTop: 4 }}
               >
                 <LinearGradient
                   colors={['#1a6b3a', '#2d9e57']}
