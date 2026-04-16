@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { config } from './config';
 import authRouter from './features/auth/auth.router';
 import usersRouter from './features/users/users.router';
+import rolesRouter from './features/roles/roles.router';
 import emergencyTypesRouter from './features/emergency-types/emergency-types.router';
 import incidentsRouter from './features/incidents/incidents.router';
 
@@ -23,6 +24,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/roles', rolesRouter);
 app.use('/api/v1/emergency-types', emergencyTypesRouter);
 app.use('/api/v1/incidents', incidentsRouter);
 

@@ -5,6 +5,7 @@ import {
   updateUserService,
   updateUserRoleService,
   deactivateUserService,
+  toggleUserStatusService,
 } from '../services/users.service';
 import { ok, badRequest, notFound, forbidden, serverError } from '../../../shared/utils/response';
 import { ROLES } from '../../../shared/constants';
@@ -92,6 +93,27 @@ export const deactivateUser = async (req: Request, res: Response): Promise<void>
   try {
     await deactivateUserService(id);
     ok(res, null, 'Usuario desactivado');
+  } catch {
+    serverError(res);
+  }
+};
+
+export const toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { estado } = req.body as { estado: boolean };
+
+  if (typeof estado !== 'boolean') {
+    badRequest(res, 'estado debe ser un booleano');
+    return;
+  }
+
+  try {
+    const updated = await toggleUserStatusService(id, estado);
+    if (!updated) {
+      notFound(res, 'Usuario no encontrado');
+      return;
+    }
+    ok(res, updated, estado ? 'Usuario activado' : 'Usuario desactivado');
   } catch {
     serverError(res);
   }

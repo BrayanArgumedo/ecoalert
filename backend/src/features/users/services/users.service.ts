@@ -80,3 +80,9 @@ export const updateUserRoleService = async (id: string, dto: UpdateRoleDto) => {
 export const deactivateUserService = async (id: string) => {
   await execute('UPDATE usuarios SET estado = FALSE WHERE id_usuario = ?', [id]);
 };
+
+export const toggleUserStatusService = async (id: string, estado: boolean) => {
+  await execute('UPDATE usuarios SET estado = ? WHERE id_usuario = ?', [estado, id]);
+  const rows = await query<UsuarioRow[]>(`${SELECT_USUARIO} WHERE u.id_usuario = ?`, [id]);
+  return rows[0] ?? null;
+};

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllUsers, getUserById, updateUser, updateUserRole, deactivateUser } from './controllers/users.controller';
+import { getAllUsers, getUserById, updateUser, updateUserRole, deactivateUser, toggleUserStatus } from './controllers/users.controller';
 import { authMiddleware } from '../../core/middleware/auth.middleware';
 import { requireRoles } from '../../core/middleware/roles.middleware';
 import { ROLES } from '../../shared/constants';
@@ -13,6 +13,7 @@ router.get('/', requireRoles(ROLES.ADMIN), getAllUsers);
 router.get('/:id', getUserById);
 router.patch('/:id', updateUser);
 router.patch('/:id/role', requireRoles(ROLES.ADMIN), updateUserRole);
+router.patch('/:id/status', requireRoles(ROLES.ADMIN), toggleUserStatus);
 router.delete('/:id', requireRoles(ROLES.ADMIN), deactivateUser);
 
 export default router;

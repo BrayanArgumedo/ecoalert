@@ -10,15 +10,13 @@ export const ROLES = {
 export type Rol = typeof ROLES[keyof typeof ROLES];
 
 export const getRolColor = (rol: string): string => {
-  switch (rol) {
-    case ROLES.ADMIN:         return '#3b82f6';
-    case ROLES.REPRESENTANTE: return '#8b5cf6';
-    case ROLES.CIUDADANO:     return '#22c55e';
-    case ROLES.BOMBERO:       return '#ef4444';
-    case ROLES.POLICIA:       return '#60a5fa';
-    case ROLES.PARAMEDICO:    return '#f97316';
-    default:                  return '#6b7280';
-  }
+  if (rol.includes('Admin'))          return '#3b82f6';
+  if (rol.includes('Representante'))  return '#8b5cf6';
+  if (rol.includes('Ciudadano'))      return '#22c55e';
+  if (rol.includes('Bombero'))        return '#ef4444';
+  if (rol.includes('Polici'))         return '#60a5fa'; // Policía / Policia
+  if (rol.includes('Paramedic') || rol.includes('Paramédic')) return '#f97316';
+  return '#6b7280';
 };
 
 export const isAdmin        = (rol: string) => rol === ROLES.ADMIN;
