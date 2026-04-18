@@ -2,7 +2,8 @@ export interface RegisterDto {
   nombre: string;
   correo: string;
   contrasena: string;
-  localidad?: string;
+  localidad: string;
+  telefono: string;
 }
 
 export interface LoginDto {

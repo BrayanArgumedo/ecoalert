@@ -17,6 +17,8 @@ const migrationFiles = [
   '006_create_incidencia_servicios.sql',
   '007_create_historial_estados.sql',
   '008_seed_data.sql',
+  '009_add_telefono_usuarios.sql',
+  '010_add_heridos_incidencias.sql',
 ];
 
 async function runMigrations(): Promise<void> {

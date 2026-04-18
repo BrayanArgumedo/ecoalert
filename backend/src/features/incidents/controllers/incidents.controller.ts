@@ -29,7 +29,13 @@ export const createIncident = async (req: Request, res: Response): Promise<void>
 
 export const getAllIncidents = async (req: Request, res: Response): Promise<void> => {
   try {
-    const incidents = await getAllIncidentsService(req.user!.id, req.user!.rol);
+    const { prioridad, estado } = req.query as { prioridad?: string; estado?: string };
+    const incidents = await getAllIncidentsService(
+      req.user!.id,
+      req.user!.rol,
+      req.user!.localidad ?? null,
+      { prioridad, estado }
+    );
     ok(res, incidents);
   } catch {
     serverError(res);

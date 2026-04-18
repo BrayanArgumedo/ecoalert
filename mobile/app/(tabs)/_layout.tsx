@@ -66,8 +66,7 @@ export default function TabsLayout() {
         tabBarIcon: (p) => <TabIcon name="home-outline" {...p} />,
       }} />
       <Tabs.Screen name="incidents" options={{
-        title: 'Incidentes',
-        href: admin ? null : undefined,
+        href: null,
         tabBarIcon: (p) => <TabIcon name="warning-outline" {...p} />,
       }} />
       <Tabs.Screen name="create-incident" options={{

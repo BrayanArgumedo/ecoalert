@@ -7,12 +7,15 @@ interface IncidenciaRow extends RowDataPacket {
   id_incidencia: string;
   id_usuario: string;
   nombre_usuario: string;
+  localidad_usuario: string;
   id_tipo_emergencia: string;
   nombre_tipo: string;
   descripcion: string;
   latitud: number | null;
   longitud: number | null;
   direccion: string | null;
+  hay_heridos: number;
+  cantidad_heridos: number | null;
   prioridad: string;
   es_comunitario: number;
   estado: string;
@@ -43,8 +46,10 @@ interface RolServicioRow extends RowDataPacket {
 const SELECT_INCIDENCIA = `
   SELECT
     i.id_incidencia, i.id_usuario, u.nombre AS nombre_usuario,
+    u.localidad AS localidad_usuario,
     i.id_tipo_emergencia, t.nombre AS nombre_tipo,
     i.descripcion, i.latitud, i.longitud, i.direccion,
+    i.hay_heridos, i.cantidad_heridos,
     i.prioridad, i.es_comunitario, i.estado, i.fecha_reporte
   FROM incidencias i
   JOIN usuarios u ON i.id_usuario = u.id_usuario
@@ -68,15 +73,19 @@ export const createIncidentService = async (
   userId: string,
   userRol: string
 ) => {
-  const { id_tipo_emergencia, descripcion, direccion, latitud, longitud, id_servicios, es_comunitario } = dto;
+  const {
+    id_tipo_emergencia, descripcion, direccion, latitud, longitud,
+    hay_heridos, cantidad_heridos, id_servicios, es_comunitario,
+  } = dto;
 
-  // Prioridad automática para Representante de Localidad
+  // Prioridad automática: alta para Representante, normal para Ciudadano
   const prioridad = userRol === ROLES.REPRESENTANTE ? 'alta' : 'normal';
 
   await execute(
     `INSERT INTO incidencias
-      (id_usuario, id_tipo_emergencia, descripcion, latitud, longitud, direccion, prioridad, es_comunitario)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id_usuario, id_tipo_emergencia, descripcion, latitud, longitud, direccion,
+       hay_heridos, cantidad_heridos, prioridad, es_comunitario)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       userId,
       id_tipo_emergencia,
@@ -84,6 +93,8 @@ export const createIncidentService = async (
       latitud ?? null,
       longitud ?? null,
       direccion ?? null,
+      hay_heridos ? 1 : 0,
+      hay_heridos && cantidad_heridos ? cantidad_heridos : null,
       prioridad,
       es_comunitario ? 1 : 0,
     ]
@@ -111,34 +122,58 @@ export const createIncidentService = async (
   return { ...incidencia, servicios };
 };
 
-// ── Listar incidencias (filtrado por rol) ───────────────────────────────────
-export const getAllIncidentsService = async (userId: string, userRol: string) => {
+// ── Listar incidencias (filtrado por rol y prioridad opcional) ──────────────
+export const getAllIncidentsService = async (
+  userId: string,
+  userRol: string,
+  userLocalidad: string | null,
+  filtros?: { prioridad?: string; estado?: string }
+) => {
   let rows: IncidenciaRow[];
 
-  if (userRol === ROLES.ADMIN || userRol === ROLES.REPRESENTANTE) {
-    // Admin y Representante ven todas
+  if (userRol === ROLES.ADMIN) {
+    // Admin ve todas
     rows = await query<IncidenciaRow[]>(`${SELECT_INCIDENCIA} ORDER BY i.fecha_reporte DESC`);
+
+  } else if (userRol === ROLES.REPRESENTANTE) {
+    // Representante ve las suyas + todas las de su localidad
+    rows = await query<IncidenciaRow[]>(
+      `${SELECT_INCIDENCIA}
+       WHERE (i.id_usuario = ? OR u.localidad = ?)
+       ORDER BY i.prioridad DESC, i.fecha_reporte DESC`,
+      [userId, userLocalidad ?? '']
+    );
+
   } else if (
     userRol === ROLES.BOMBERO ||
     userRol === ROLES.POLICIA ||
     userRol === ROLES.PARAMEDICO
   ) {
-    // Responders ven solo las que requieren su servicio y están activas
+    // Responders ven las que requieren su servicio
     rows = await query<IncidenciaRow[]>(
       `${SELECT_INCIDENCIA}
        JOIN incidencia_servicios ise ON i.id_incidencia = ise.id_incidencia
        JOIN servicios_publicos sp ON ise.id_servicio = sp.id_servicio
-       JOIN roles r ON sp.id_rol_asignado = r.id_rol
-       WHERE r.nombre_rol = ? AND i.estado IN ('pendiente', 'en_proceso')
+       JOIN roles r2 ON sp.id_rol_asignado = r2.id_rol
+       WHERE r2.nombre_rol = ?
        ORDER BY i.prioridad DESC, i.fecha_reporte ASC`,
       [userRol]
     );
+
   } else {
     // Ciudadano: solo las suyas
     rows = await query<IncidenciaRow[]>(
       `${SELECT_INCIDENCIA} WHERE i.id_usuario = ? ORDER BY i.fecha_reporte DESC`,
       [userId]
     );
+  }
+
+  // Filtros opcionales de prioridad y estado
+  if (filtros?.prioridad) {
+    rows = rows.filter((r) => r.prioridad === filtros.prioridad);
+  }
+  if (filtros?.estado) {
+    rows = rows.filter((r) => r.estado === filtros.estado);
   }
 
   // Agregar servicios a cada incidencia

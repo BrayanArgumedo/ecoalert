@@ -5,6 +5,7 @@ export interface JwtPayload {
   id: string;
   correo: string;
   rol: string;
+  localidad: string;
 }
 
 export const signAccessToken = (payload: JwtPayload): string => {

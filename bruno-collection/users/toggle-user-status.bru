@@ -1,0 +1,21 @@
+meta {
+  name: Toggle User Status
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/users/{{user_id}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "estado": false
+  }
+}

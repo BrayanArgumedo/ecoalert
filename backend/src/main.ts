@@ -7,6 +7,7 @@ import usersRouter from './features/users/users.router';
 import rolesRouter from './features/roles/roles.router';
 import emergencyTypesRouter from './features/emergency-types/emergency-types.router';
 import incidentsRouter from './features/incidents/incidents.router';
+import servicesRouter from './features/services/services.router';
 
 dotenv.config();
 
@@ -27,11 +28,7 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/roles', rolesRouter);
 app.use('/api/v1/emergency-types', emergencyTypesRouter);
 app.use('/api/v1/incidents', incidentsRouter);
-
-// TODO: registrar rutas de cada módulo aquí a medida que se implementen
-// app.use('/api/v1/incidents', incidentsRouter);
-// app.use('/api/v1/notifications', notificationsRouter);
-// app.use('/api/v1/reports', reportsRouter);
+app.use('/api/v1/services', servicesRouter);
 
 // ── 404 handler ─────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {

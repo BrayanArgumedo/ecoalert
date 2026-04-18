@@ -6,6 +6,8 @@ export interface CreateIncidentDto {
   direccion?: string;
   latitud?: number;
   longitud?: number;
+  hay_heridos?: boolean;
+  cantidad_heridos?: number;
   id_servicios: string[];
   es_comunitario?: boolean;
 }

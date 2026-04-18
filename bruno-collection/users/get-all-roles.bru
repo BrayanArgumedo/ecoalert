@@ -1,11 +1,11 @@
 meta {
-  name: Get All Incidents
+  name: Get All Roles
   type: http
-  seq: 2
+  seq: 6
 }
 
 get {
-  url: {{base_url}}/incidents?prioridad=alta&estado=pendiente
+  url: {{base_url}}/roles
   body: none
   auth: bearer
 }

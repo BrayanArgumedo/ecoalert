@@ -11,7 +11,7 @@ router.use(authMiddleware);
 router.post('/', requireRoles(ROLES.CIUDADANO, ROLES.REPRESENTANTE), createIncident);
 router.get('/', getAllIncidents);
 router.get('/:id', getIncidentById);
-router.patch('/:id/status', requireRoles(ROLES.ADMIN, ROLES.BOMBERO, ROLES.POLICIA, ROLES.PARAMEDICO), changeStatus);
+router.patch('/:id/status', requireRoles(ROLES.ADMIN), changeStatus);
 router.get('/:id/history', getHistory);
 
 export default router;

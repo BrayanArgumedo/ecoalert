@@ -1,6 +1,10 @@
 import { RowDataPacket } from 'mysql2';
 import { query, execute } from '../../../infrastructure/database/query';
+import { ROLES } from '../../../shared/constants';
 import type { UpdateUserDto, UpdateRoleDto } from '../dto/users.dto';
+
+// Roles que solo pueden tener 1 usuario activo en todo el sistema
+const ROLES_UNICOS_GLOBALES = [ROLES.BOMBERO, ROLES.POLICIA, ROLES.PARAMEDICO];
 
 interface UsuarioRow extends RowDataPacket {
   id_usuario: string;
@@ -62,13 +66,49 @@ export const updateUserService = async (id: string, dto: UpdateUserDto) => {
 };
 
 export const updateUserRoleService = async (id: string, dto: UpdateRoleDto) => {
-  // Verificar que el rol existe
+  // Verificar que el rol existe y obtener su nombre
   const roles = await query<RolRow[]>(
-    'SELECT id_rol FROM roles WHERE id_rol = ?',
+    'SELECT id_rol, nombre_rol FROM roles WHERE id_rol = ?',
     [dto.id_rol]
   );
-  if (roles.length === 0) {
-    throw new Error('Rol no encontrado');
+  if (roles.length === 0) throw new Error('Rol no encontrado');
+
+  const nuevoRol = roles[0].nombre_rol;
+
+  // Obtener el usuario que se va a modificar
+  const usuarioRows = await query<UsuarioRow[]>(
+    `${SELECT_USUARIO} WHERE u.id_usuario = ?`, [id]
+  );
+  if (usuarioRows.length === 0) throw new Error('Usuario no encontrado');
+  const usuario = usuarioRows[0];
+
+  // ── Validación: roles únicos globales (Bombero, Policía, Paramédico) ────────
+  if (ROLES_UNICOS_GLOBALES.includes(nuevoRol as any)) {
+    const activos = await query<UsuarioRow[]>(
+      `${SELECT_USUARIO} WHERE r.nombre_rol = ? AND u.estado = TRUE AND u.id_usuario != ?`,
+      [nuevoRol, id]
+    );
+    if (activos.length > 0) {
+      throw new Error(
+        `Ya existe un usuario activo con el rol ${nuevoRol}. Desactívalo antes de asignar otro.`
+      );
+    }
+  }
+
+  // ── Validación: máximo 1 Representante activo por localidad ─────────────────
+  if (nuevoRol === ROLES.REPRESENTANTE) {
+    if (!usuario.localidad) {
+      throw new Error('El usuario no tiene localidad asignada');
+    }
+    const activos = await query<UsuarioRow[]>(
+      `${SELECT_USUARIO} WHERE r.nombre_rol = ? AND u.localidad = ? AND u.estado = TRUE AND u.id_usuario != ?`,
+      [nuevoRol, usuario.localidad, id]
+    );
+    if (activos.length > 0) {
+      throw new Error(
+        `Ya existe un Representante activo en ${usuario.localidad}. Desactívalo antes de asignar otro.`
+      );
+    }
   }
 
   await execute('UPDATE usuarios SET id_rol = ? WHERE id_usuario = ?', [dto.id_rol, id]);

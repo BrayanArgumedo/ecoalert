@@ -3,6 +3,7 @@ import { query } from '../../../infrastructure/database/query';
 import { hashPassword, comparePassword } from '../../../shared/utils/bcrypt';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../../shared/utils/jwt';
 import { ROLES } from '../../../shared/constants';
+import { LOCALIDADES_CERETE } from '../../../shared/constants/localidades';
 import type { RegisterDto, LoginDto, RefreshDto } from '../dto/auth.dto';
 
 interface UsuarioRow extends RowDataPacket {
@@ -12,7 +13,8 @@ interface UsuarioRow extends RowDataPacket {
   contrasena: string;
   id_rol: string;
   nombre_rol: string;
-  localidad: string | null;
+  localidad: string;
+  telefono: string;
   estado: number;
 }
 
@@ -25,6 +27,7 @@ const buildTokens = (usuario: UsuarioRow) => {
     id: usuario.id_usuario,
     correo: usuario.correo,
     rol: usuario.nombre_rol,
+    localidad: usuario.localidad,
   };
   return {
     accessToken: signAccessToken(payload),
@@ -33,7 +36,12 @@ const buildTokens = (usuario: UsuarioRow) => {
 };
 
 export const registerService = async (dto: RegisterDto) => {
-  const { nombre, correo, contrasena, localidad } = dto;
+  const { nombre, correo, contrasena, localidad, telefono } = dto;
+
+  // Validar que la localidad pertenece a la lista oficial de Cereté
+  if (!LOCALIDADES_CERETE.includes(localidad)) {
+    throw new Error('Localidad no válida para el municipio de Cereté');
+  }
 
   // Verificar correo duplicado
   const existing = await query<UsuarioRow[]>(
@@ -56,13 +64,14 @@ export const registerService = async (dto: RegisterDto) => {
   const hashed = await hashPassword(contrasena);
 
   await query(
-    `INSERT INTO usuarios (nombre, correo, contrasena, id_rol, localidad)
-     VALUES (?, ?, ?, ?, ?)`,
-    [nombre, correo, hashed, roles[0].id_rol, localidad ?? null]
+    `INSERT INTO usuarios (nombre, correo, contrasena, id_rol, localidad, telefono)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [nombre, correo, hashed, roles[0].id_rol, localidad, telefono]
   );
 
   const usuario = await query<UsuarioRow[]>(
-    `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol, u.localidad, u.estado
+    `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol,
+            u.localidad, u.telefono, u.estado
      FROM usuarios u
      JOIN roles r ON u.id_rol = r.id_rol
      WHERE u.correo = ?`,
@@ -76,7 +85,8 @@ export const loginService = async (dto: LoginDto) => {
   const { correo, contrasena } = dto;
 
   const rows = await query<UsuarioRow[]>(
-    `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol, u.localidad, u.estado
+    `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol,
+            u.localidad, u.telefono, u.estado
      FROM usuarios u
      JOIN roles r ON u.id_rol = r.id_rol
      WHERE u.correo = ?`,
@@ -106,6 +116,7 @@ export const loginService = async (dto: LoginDto) => {
       correo: usuario.correo,
       rol: usuario.nombre_rol,
       localidad: usuario.localidad,
+      telefono: usuario.telefono,
     },
   };
 };
@@ -115,7 +126,8 @@ export const refreshService = async (dto: RefreshDto) => {
 
   // Verificar que el usuario aún existe y está activo
   const rows = await query<UsuarioRow[]>(
-    `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol, u.localidad, u.estado
+    `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol,
+            u.localidad, u.telefono, u.estado
      FROM usuarios u
      JOIN roles r ON u.id_rol = r.id_rol
      WHERE u.id_usuario = ?`,

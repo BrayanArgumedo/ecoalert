@@ -3,7 +3,8 @@ export interface User {
   nombre: string;
   correo: string;
   rol: string;
-  localidad: string | null;
+  localidad: string;
+  telefono: string;
 }
 
 export interface AuthState {
@@ -14,7 +15,7 @@ export interface AuthState {
   isLoading: boolean;
 
   login: (correo: string, contrasena: string) => Promise<void>;
-  register: (nombre: string, correo: string, contrasena: string, localidad?: string) => Promise<void>;
+  register: (nombre: string, correo: string, contrasena: string, localidad: string, telefono: string) => Promise<void>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
 }

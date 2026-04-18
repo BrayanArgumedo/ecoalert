@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (correo, contrasena) => {
-    const { data } = await api.post('/auth/login', { correo, contrasena });
+    const { data } = await api.post('/auth/login', { correo: correo.trim().toLowerCase(), contrasena: contrasena.trim() });
     const { accessToken, refreshToken, usuario } = data.data;
 
     await SecureStore.setItemAsync('access_token', accessToken);
@@ -47,10 +47,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
-  register: async (nombre, correo, contrasena, localidad) => {
-    await api.post('/auth/register', { nombre, correo, contrasena, localidad });
+  register: async (nombre, correo, contrasena, localidad, telefono) => {
+    const contTrim = contrasena.trim();
+    await api.post('/auth/register', { nombre, correo, contrasena: contTrim, localidad, telefono });
     // Tras registrarse hacemos login automáticamente
-    const { data } = await api.post('/auth/login', { correo, contrasena });
+    const { data } = await api.post('/auth/login', { correo, contrasena: contTrim });
     const { accessToken, refreshToken, usuario } = data.data;
 
     await SecureStore.setItemAsync('access_token', accessToken);

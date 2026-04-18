@@ -1,0 +1,2 @@
+ALTER TABLE usuarios
+  ADD COLUMN telefono VARCHAR(20) NOT NULL DEFAULT '' AFTER localidad;

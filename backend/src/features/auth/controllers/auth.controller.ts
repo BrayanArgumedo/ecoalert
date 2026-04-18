@@ -4,19 +4,27 @@ import { created, ok, badRequest, unauthorized, serverError } from '../../../sha
 import type { RegisterDto, LoginDto, RefreshDto } from '../dto/auth.dto';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const { nombre, correo, contrasena, localidad } = req.body as RegisterDto;
+  const { nombre, correo, contrasena, localidad, telefono } = req.body as RegisterDto;
 
-  if (!nombre || !correo || !contrasena) {
-    badRequest(res, 'nombre, correo y contrasena son requeridos');
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const TYPO_TLD   = /\.(con|cmo|ocm|ogr|nte|ccom|comn|om|cpm|cim)$/i;
+
+  if (!nombre)     { badRequest(res, 'El nombre es requerido');       return; }
+  if (!correo)     { badRequest(res, 'El correo es requerido');       return; }
+  if (!EMAIL_REGEX.test(correo) || TYPO_TLD.test(correo)) {
+    badRequest(res, 'El correo no tiene un formato válido');
     return;
   }
+  if (!contrasena) { badRequest(res, 'La contraseña es requerida');   return; }
+  if (!telefono)   { badRequest(res, 'El teléfono es requerido');     return; }
+  if (!localidad)  { badRequest(res, 'La localidad es requerida');    return; }
 
   try {
-    const tokens = await registerService({ nombre, correo, contrasena, localidad });
+    const tokens = await registerService({ nombre, correo, contrasena, localidad, telefono });
     created(res, tokens, 'Usuario registrado exitosamente');
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error al registrar';
-    if (message === 'El correo ya está registrado') {
+    if (message === 'El correo ya está registrado' || message.startsWith('Localidad')) {
       badRequest(res, message);
     } else {
       serverError(res, message);

@@ -1,6 +1,6 @@
 export const ROLES = {
   ADMIN: 'Admin',
-  REPRESENTANTE: 'Representante',
+  REPRESENTANTE: 'Representante de Localidad',
   CIUDADANO: 'Ciudadano',
   BOMBERO: 'Bombero',
   POLICIA: 'Policía',
@@ -20,8 +20,8 @@ export const getRolColor = (rol: string): string => {
 };
 
 export const isAdmin        = (rol: string) => rol === ROLES.ADMIN;
-export const isResponder    = (rol: string) => [ROLES.BOMBERO, ROLES.POLICIA, ROLES.PARAMEDICO].includes(rol as Rol);
-export const canCreateIncident = (rol: string) => [ROLES.CIUDADANO, ROLES.REPRESENTANTE].includes(rol as Rol);
+export const isResponder       = (rol: string) => ([ROLES.BOMBERO, ROLES.POLICIA, ROLES.PARAMEDICO] as string[]).includes(rol);
+export const canCreateIncident = (rol: string) => ([ROLES.CIUDADANO, ROLES.REPRESENTANTE] as string[]).includes(rol);
 
 export const getGreeting = (): string => {
   const h = new Date().getHours();
