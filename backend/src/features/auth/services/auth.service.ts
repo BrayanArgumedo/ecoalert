@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { RowDataPacket } from 'mysql2';
 import { query } from '../../../infrastructure/database/query';
 import { hashPassword, comparePassword } from '../../../shared/utils/bcrypt';
@@ -16,6 +17,7 @@ interface UsuarioRow extends RowDataPacket {
   localidad: string;
   telefono: string;
   estado: number;
+  avatar_seed: string | null;
 }
 
 interface RolRow extends RowDataPacket {
@@ -62,16 +64,17 @@ export const registerService = async (dto: RegisterDto) => {
   }
 
   const hashed = await hashPassword(contrasena);
+  const avatarSeed = randomUUID();
 
   await query(
-    `INSERT INTO usuarios (nombre, correo, contrasena, id_rol, localidad, telefono)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [nombre, correo, hashed, roles[0].id_rol, localidad, telefono]
+    `INSERT INTO usuarios (nombre, correo, contrasena, id_rol, localidad, telefono, avatar_seed)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [nombre, correo, hashed, roles[0].id_rol, localidad, telefono, avatarSeed]
   );
 
   const usuario = await query<UsuarioRow[]>(
     `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol,
-            u.localidad, u.telefono, u.estado
+            u.localidad, u.telefono, u.estado, u.avatar_seed
      FROM usuarios u
      JOIN roles r ON u.id_rol = r.id_rol
      WHERE u.correo = ?`,
@@ -86,7 +89,7 @@ export const loginService = async (dto: LoginDto) => {
 
   const rows = await query<UsuarioRow[]>(
     `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol,
-            u.localidad, u.telefono, u.estado
+            u.localidad, u.telefono, u.estado, u.avatar_seed
      FROM usuarios u
      JOIN roles r ON u.id_rol = r.id_rol
      WHERE u.correo = ?`,
@@ -117,6 +120,7 @@ export const loginService = async (dto: LoginDto) => {
       rol: usuario.nombre_rol,
       localidad: usuario.localidad,
       telefono: usuario.telefono,
+      avatar_seed: usuario.avatar_seed,
     },
   };
 };
@@ -127,7 +131,7 @@ export const refreshService = async (dto: RefreshDto) => {
   // Verificar que el usuario aún existe y está activo
   const rows = await query<UsuarioRow[]>(
     `SELECT u.id_usuario, u.nombre, u.correo, u.contrasena, u.id_rol, r.nombre_rol,
-            u.localidad, u.telefono, u.estado
+            u.localidad, u.telefono, u.estado, u.avatar_seed
      FROM usuarios u
      JOIN roles r ON u.id_rol = r.id_rol
      WHERE u.id_usuario = ?`,

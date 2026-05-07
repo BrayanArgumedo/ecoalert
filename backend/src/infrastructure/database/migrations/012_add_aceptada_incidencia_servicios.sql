@@ -1,0 +1,3 @@
+ALTER TABLE incidencia_servicios
+  ADD COLUMN aceptada    BOOLEAN   NOT NULL DEFAULT FALSE,
+  ADD COLUMN aceptada_en TIMESTAMP NULL     DEFAULT NULL;

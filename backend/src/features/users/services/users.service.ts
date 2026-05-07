@@ -15,6 +15,7 @@ interface UsuarioRow extends RowDataPacket {
   localidad: string | null;
   fecha_registro: string;
   estado: number;
+  avatar_seed: string | null;
 }
 
 interface RolRow extends RowDataPacket {
@@ -24,7 +25,7 @@ interface RolRow extends RowDataPacket {
 
 const SELECT_USUARIO = `
   SELECT u.id_usuario, u.nombre, u.correo, u.id_rol, r.nombre_rol,
-         u.localidad, u.fecha_registro, u.estado
+         u.localidad, u.fecha_registro, u.estado, u.avatar_seed
   FROM usuarios u
   JOIN roles r ON u.id_rol = r.id_rol
 `;
@@ -123,6 +124,12 @@ export const deactivateUserService = async (id: string) => {
 
 export const toggleUserStatusService = async (id: string, estado: boolean) => {
   await execute('UPDATE usuarios SET estado = ? WHERE id_usuario = ?', [estado, id]);
+  const rows = await query<UsuarioRow[]>(`${SELECT_USUARIO} WHERE u.id_usuario = ?`, [id]);
+  return rows[0] ?? null;
+};
+
+export const updateAvatarService = async (id: string, seed: string) => {
+  await execute('UPDATE usuarios SET avatar_seed = ? WHERE id_usuario = ?', [seed, id]);
   const rows = await query<UsuarioRow[]>(`${SELECT_USUARIO} WHERE u.id_usuario = ?`, [id]);
   return rows[0] ?? null;
 };

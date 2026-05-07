@@ -1,6 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getServices, createIncident, type Servicio } from '../../../core/services/incidentsService';
 import { getEmergencyTypes, type TipoEmergencia } from '../../../core/services/emergencyTypesService';
+
+const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+
+async function geocodeAddress(address: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const q = encodeURIComponent(`${address}, Cereté, Córdoba, Colombia`);
+    const res = await fetch(`${NOMINATIM}?q=${q}&format=json&limit=1`, {
+      headers: { 'User-Agent': 'EcoAlert/1.0 (bargumedo0720@gmail.com)' },
+    });
+    const data = await res.json();
+    if (data.length > 0) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export function useCreateIncident() {
   // Datos del API
@@ -20,15 +36,50 @@ export function useCreateIncident() {
   const [modalTipo,    setModalTipo]    = useState(false);
   const [busquedaTipo, setBusquedaTipo] = useState('');
 
+  // Geocodificación en tiempo real de la dirección
+  const [geocodedCoords, setGeocodedCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [geocodingAddr,  setGeocodingAddr]  = useState(false);
+  const [geocodeError,   setGeocodeError]   = useState(false);
+  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Estado de envío
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
   const [exito,   setExito]   = useState(false);
 
+  // Geocodificar al cambiar dirección (debounce 700ms)
   useEffect(() => {
-    Promise.all([getEmergencyTypes(), getServices()])
-      .then(([t, s]) => { setTipos(t); setServicios(s); })
-      .catch(() => setError('No se pudieron cargar los datos. Verifica tu conexión.'))
+    const trimmed = direccion.trim();
+    if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+
+    if (!trimmed) {
+      setGeocodedCoords(null);
+      setGeocodeError(false);
+      setGeocodingAddr(false);
+      return;
+    }
+
+    setGeocodingAddr(true);
+    setGeocodeError(false);
+
+    geocodeTimer.current = setTimeout(async () => {
+      const result = await geocodeAddress(trimmed);
+      setGeocodedCoords(result);
+      setGeocodeError(result === null);
+      setGeocodingAddr(false);
+    }, 700);
+
+    return () => { if (geocodeTimer.current) clearTimeout(geocodeTimer.current); };
+  }, [direccion]);
+
+  useEffect(() => {
+    Promise.allSettled([getEmergencyTypes(), getServices()])
+      .then(([tiposRes, serviciosRes]) => {
+        if (tiposRes.status === 'fulfilled')    setTipos(tiposRes.value);
+        if (serviciosRes.status === 'fulfilled') setServicios(serviciosRes.value);
+        if (tiposRes.status === 'rejected' || serviciosRes.status === 'rejected')
+          setError('No se pudieron cargar todos los datos. Verifica tu conexión.');
+      })
       .finally(() => setLoadingData(false));
   }, []);
 
@@ -59,6 +110,8 @@ export function useCreateIncident() {
     setServiciosSel([]);
     setExito(false);
     setError('');
+    setGeocodedCoords(null);
+    setGeocodeError(false);
   };
 
   const handleSubmit = async () => {
@@ -103,6 +156,8 @@ export function useCreateIncident() {
     modalTipo, setModalTipo,
     busquedaTipo, setBusquedaTipo,
     tiposFiltrados, seleccionarTipo,
+    // Geocodificación
+    geocodedCoords, geocodingAddr, geocodeError,
     // Envío
     loading, error, exito,
     handleSubmit, resetForm,

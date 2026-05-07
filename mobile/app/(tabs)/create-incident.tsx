@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   StatusBar, Platform, Modal, FlatList, ActivityIndicator, Switch,
@@ -6,20 +7,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCreateIncident } from '../../src/features/incidents/hooks/useCreateIncident';
+import { resolveIcon } from '../../src/features/incidents/components/IncidentCard';
 import SectionCard from '../../src/shared/components/SectionCard';
+import MapLeaflet from '../../src/shared/components/MapLeaflet';
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
 
-const TIPO_ICON: Record<string, IoniconsName> = {
-  Terremoto:                 'pulse-outline',
-  'Inundación':              'water-outline',
-  Derrumbe:                  'alert-circle-outline',
-  'Huracán':                 'thunderstorm-outline',
-  'Incendio Forestal':       'flame-outline',
-  Deslizamiento:             'trending-down-outline',
-  'Tormenta Eléctrica':      'flash-outline',
-  'Contaminación Ambiental': 'leaf-outline',
-};
 
 const SERVICIO_ICON: Record<string, IoniconsName> = {
   Bomberos:            'flame-outline',
@@ -29,6 +22,7 @@ const SERVICIO_ICON: Record<string, IoniconsName> = {
 
 export default function CreateIncidentScreen() {
   const router = useRouter();
+  const [scrollEnabled, setScrollEnabled] = useState(true);
   const {
     tipos, servicios, loadingData,
     tipoSeleccionado, descripcion, setDescripcion,
@@ -39,6 +33,7 @@ export default function CreateIncidentScreen() {
     modalTipo, setModalTipo,
     busquedaTipo, setBusquedaTipo,
     tiposFiltrados, seleccionarTipo,
+    geocodedCoords, geocodingAddr, geocodeError,
     loading, error, exito,
     handleSubmit, resetForm,
   } = useCreateIncident();
@@ -73,7 +68,7 @@ export default function CreateIncidentScreen() {
     <View style={{ flex: 1, backgroundColor: '#f8faf9' }}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8faf9" translucent={false} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={scrollEnabled} contentContainerStyle={{ paddingBottom: 40 }}>
 
         {/* ══ Header ══════════════════════════════════════════════════ */}
         <LinearGradient
@@ -106,7 +101,7 @@ export default function CreateIncidentScreen() {
                   activeOpacity={0.8}
                   style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1.5, borderColor: tipoSeleccionado ? '#16a34a' : '#e5e7eb', paddingHorizontal: 14, height: 52 }}
                 >
-                  <Ionicons name={tipoSeleccionado ? (TIPO_ICON[tipoSeleccionado.nombre] ?? 'alert-circle-outline') : 'alert-circle-outline'} size={18} color={tipoSeleccionado ? '#16a34a' : '#9ca3af'} style={{ marginRight: 10 }} />
+                  <Ionicons name={tipoSeleccionado ? resolveIcon(tipoSeleccionado.icono, tipoSeleccionado.nombre) : 'alert-circle-outline'} size={18} color={tipoSeleccionado ? '#16a34a' : '#9ca3af'} style={{ marginRight: 10 }} />
                   <Text style={{ flex: 1, fontSize: 15, color: tipoSeleccionado ? '#111827' : '#9ca3af' }}>
                     {tipoSeleccionado?.nombre ?? 'Selecciona el tipo'}
                   </Text>
@@ -127,11 +122,50 @@ export default function CreateIncidentScreen() {
               </SectionCard>
 
               {/* Dirección */}
-              <SectionCard title="Dirección" icon="location-outline" subtitle="Opcional — ayuda a localizar el incidente">
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1.5, borderColor: '#e5e7eb', paddingHorizontal: 14, height: 52 }}>
-                  <Ionicons name="location-outline" size={18} color="#9ca3af" style={{ marginRight: 10 }} />
-                  <TextInput value={direccion} onChangeText={setDireccion} placeholder="Calle, barrio, referencia..." placeholderTextColor="#9ca3af" style={{ flex: 1, color: '#111827', fontSize: 15 }} />
+              <SectionCard title="Dirección" icon="location-outline" subtitle="Opcional — genera el mapa automáticamente">
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1.5, borderColor: geocodedCoords ? '#16a34a' : geocodeError ? '#fca5a5' : '#e5e7eb', paddingHorizontal: 14, height: 52 }}>
+                  <Ionicons
+                    name={geocodedCoords ? 'checkmark-circle-outline' : geocodeError ? 'alert-circle-outline' : 'location-outline'}
+                    size={18}
+                    color={geocodedCoords ? '#16a34a' : geocodeError ? '#dc2626' : '#9ca3af'}
+                    style={{ marginRight: 10 }}
+                  />
+                  <TextInput
+                    value={direccion}
+                    onChangeText={setDireccion}
+                    placeholder="ej: Cra 15 #18-16"
+                    placeholderTextColor="#9ca3af"
+                    style={{ flex: 1, color: '#111827', fontSize: 15 }}
+                  />
+                  {geocodingAddr && <ActivityIndicator size="small" color="#16a34a" />}
                 </View>
+
+                {/* Advertencia si no se encontró */}
+                {geocodeError && !geocodingAddr && (
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 8, backgroundColor: '#fef3c7', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#fcd34d' }}>
+                    <Ionicons name="warning-outline" size={15} color="#d97706" style={{ marginTop: 1 }} />
+                    <Text style={{ color: '#92400e', fontSize: 12, flex: 1, lineHeight: 18 }}>
+                      No se pudo localizar esta dirección en el mapa. Verifica que sea una dirección de Cereté, ej: Cra 15 #18-16, Calle 5 #10-20.
+                    </Text>
+                  </View>
+                )}
+
+                {/* Mapa en tiempo real */}
+                {geocodedCoords && !geocodingAddr && (
+                  <View style={{ marginTop: 12 }}>
+                    <MapLeaflet
+                      lat={geocodedCoords.lat}
+                      lon={geocodedCoords.lon}
+                      label={direccion}
+                      height={180}
+                      onScrollLock={() => setScrollEnabled(false)}
+                      onScrollUnlock={() => setScrollEnabled(true)}
+                    />
+                    <Text style={{ color: '#9ca3af', fontSize: 11, marginTop: 6, textAlign: 'center' }}>
+                      Ubicación encontrada · se guardará con el reporte
+                    </Text>
+                  </View>
+                )}
               </SectionCard>
 
               {/* Heridos */}
@@ -222,7 +256,7 @@ export default function CreateIncidentScreen() {
                     style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 14, borderRadius: 12, marginBottom: 4, backgroundColor: sel ? '#f0fdf4' : 'transparent', borderWidth: sel ? 1.5 : 0, borderColor: '#16a34a' }}
                   >
                     <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: sel ? '#dcfce7' : '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                      <Ionicons name={TIPO_ICON[item.nombre] ?? 'alert-circle-outline'} size={18} color={sel ? '#16a34a' : '#6b7280'} />
+                      <Ionicons name={resolveIcon(item.icono, item.nombre)} size={18} color={sel ? '#16a34a' : '#6b7280'} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: sel ? '#15803d' : '#111827', fontWeight: sel ? '700' : '500', fontSize: 14 }}>{item.nombre}</Text>

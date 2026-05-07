@@ -4,16 +4,50 @@ import type { TipoEmergencia } from '../../../core/services/emergencyTypesServic
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
 
+// Alias cortos que vienen de la BD en los tipos sembrados originalmente
 const TYPE_ICON_MAP: Record<string, { icon: IoniconsName; color: string }> = {
-  earthquake:  { icon: 'pulse-outline',        color: '#d97706' },
-  flood:       { icon: 'water-outline',         color: '#2563eb' },
-  landslide:   { icon: 'trending-down-outline', color: '#92400e' },
-  slide:       { icon: 'trending-down-outline', color: '#92400e' },
-  hurricane:   { icon: 'thunderstorm-outline',  color: '#7c3aed' },
-  fire:        { icon: 'flame-outline',         color: '#dc2626' },
-  storm:       { icon: 'thunderstorm-outline',  color: '#4f46e5' },
-  pollution:   { icon: 'cloud-outline',         color: '#15803d' },
+  earthquake: { icon: 'pulse-outline',        color: '#d97706' },
+  flood:      { icon: 'water-outline',         color: '#2563eb' },
+  landslide:  { icon: 'trending-down-outline', color: '#92400e' },
+  slide:      { icon: 'trending-down-outline', color: '#92400e' },
+  hurricane:  { icon: 'thunderstorm-outline',  color: '#7c3aed' },
+  fire:       { icon: 'flame-outline',         color: '#dc2626' },
+  storm:      { icon: 'thunderstorm-outline',  color: '#4f46e5' },
+  pollution:  { icon: 'cloud-outline',         color: '#15803d' },
 };
+
+// Íconos disponibles en el selector del formulario (nombres directos de Ionicons)
+export const EMERGENCY_ICONS: Array<{ key: IoniconsName; label: string; color: string }> = [
+  { key: 'flame-outline',         label: 'Incendio',  color: '#dc2626' },
+  { key: 'water-outline',         label: 'Inundación',color: '#2563eb' },
+  { key: 'pulse-outline',         label: 'Sismo',     color: '#d97706' },
+  { key: 'thunderstorm-outline',  label: 'Tormenta',  color: '#7c3aed' },
+  { key: 'rainy-outline',         label: 'Lluvia',    color: '#0284c7' },
+  { key: 'flash-outline',         label: 'Rayo',      color: '#f59e0b' },
+  { key: 'trending-down-outline', label: 'Desliz.',   color: '#92400e' },
+  { key: 'snow-outline',          label: 'Granizo',   color: '#0ea5e9' },
+  { key: 'sunny-outline',         label: 'Sequía',    color: '#eab308' },
+  { key: 'partly-sunny-outline',  label: 'Calor',     color: '#f97316' },
+  { key: 'thermometer-outline',   label: 'Temperat.', color: '#ef4444' },
+  { key: 'cloud-outline',         label: 'Contamin.', color: '#6b7280' },
+  { key: 'leaf-outline',          label: 'Deforest.', color: '#16a34a' },
+  { key: 'nuclear-outline',       label: 'Químico',   color: '#8b5cf6' },
+  { key: 'bug-outline',           label: 'Vector',    color: '#84cc16' },
+  { key: 'medkit-outline',        label: 'Sanitaria', color: '#ec4899' },
+  { key: 'alert-circle-outline',  label: 'Alerta',    color: '#ef4444' },
+  { key: 'warning-outline',       label: 'Aviso',     color: '#f97316' },
+  { key: 'business-outline',      label: 'Derrumbe',  color: '#64748b' },
+  { key: 'home-outline',          label: 'Vivienda',  color: '#7c3aed' },
+  { key: 'layers-outline',        label: 'Erosión',   color: '#a16207' },
+  { key: 'construct-outline',     label: 'Infraest.', color: '#78716c' },
+  { key: 'boat-outline',          label: 'Marejada',  color: '#3b82f6' },
+  { key: 'trail-sign-outline',    label: 'Evacuac.',  color: '#0891b2' },
+  { key: 'earth-outline',         label: 'Ambiental', color: '#059669' },
+  { key: 'radio-outline',         label: 'Alerta SC', color: '#f43f5e' },
+  { key: 'skull-outline',         label: 'Tóxico',    color: '#1f2937' },
+];
+
+const ICON_COLOR_MAP = Object.fromEntries(EMERGENCY_ICONS.map((ic) => [ic.key, ic.color]));
 
 const FALLBACK_COLORS = [
   '#dc2626', '#d97706', '#2563eb', '#7c3aed', '#15803d',
@@ -21,7 +55,15 @@ const FALLBACK_COLORS = [
 ];
 
 export function getTypeStyle(tipo: TipoEmergencia, index: number): { icon: IoniconsName; color: string } {
-  if (tipo.icono && TYPE_ICON_MAP[tipo.icono]) return TYPE_ICON_MAP[tipo.icono];
+  if (tipo.icono) {
+    // Alias cortos de la BD (tipos sembrados originalmente)
+    if (TYPE_ICON_MAP[tipo.icono]) return TYPE_ICON_MAP[tipo.icono];
+    // Nombre Ionicons directo (guardado por el nuevo selector)
+    return {
+      icon: tipo.icono as IoniconsName,
+      color: ICON_COLOR_MAP[tipo.icono] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+    };
+  }
   return { icon: 'warning-outline', color: FALLBACK_COLORS[index % FALLBACK_COLORS.length] };
 }
 

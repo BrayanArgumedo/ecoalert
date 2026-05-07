@@ -14,6 +14,7 @@ export function useEmergencyTypes() {
   const [editing,    setEditing]    = useState<TipoEmergencia | null>(null);
   const [formNombre, setFormNombre] = useState('');
   const [formDesc,   setFormDesc]   = useState('');
+  const [formIcono,  setFormIcono]  = useState('');
   const [formError,  setFormError]  = useState<string | null>(null);
   const [saving,     setSaving]     = useState(false);
 
@@ -40,6 +41,7 @@ export function useEmergencyTypes() {
     setEditing(null);
     setFormNombre('');
     setFormDesc('');
+    setFormIcono('');
     setFormError(null);
     setFormModal(true);
   };
@@ -48,6 +50,7 @@ export function useEmergencyTypes() {
     setEditing(tipo);
     setFormNombre(tipo.nombre);
     setFormDesc(tipo.descripcion ?? '');
+    setFormIcono(tipo.icono ?? '');
     setFormError(null);
     setFormModal(true);
   };
@@ -66,12 +69,14 @@ export function useEmergencyTypes() {
         const updated = await updateEmergencyType(editing.id_tipo, {
           nombre: formNombre.trim(),
           descripcion: formDesc.trim() || undefined,
+          icono: formIcono || null,
         });
         setTypes((prev) => prev.map((t) => t.id_tipo === updated.id_tipo ? updated : t));
       } else {
         const created = await createEmergencyType({
           nombre: formNombre.trim(),
           descripcion: formDesc.trim() || undefined,
+          icono: formIcono || undefined,
         });
         setTypes((prev) => [...prev, created]);
       }
@@ -100,7 +105,7 @@ export function useEmergencyTypes() {
   return {
     types, loading, error, loadTypes,
     formModal, setFormModal, editing, formNombre, setFormNombre,
-    formDesc, setFormDesc, formError, setFormError, saving,
+    formDesc, setFormDesc, formIcono, setFormIcono, formError, setFormError, saving,
     openCreate, openEdit, handleSave,
     deleteModal, setDeleteModal, deleting, targetDelete, openDelete, handleDelete,
   };

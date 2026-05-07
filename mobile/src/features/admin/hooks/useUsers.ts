@@ -1,13 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { getUsers, getRoles, changeUserRole, toggleUserStatus } from '../../../core/services/usersService';
+import { useAuthStore } from '../.././../core/stores/authStore';
 import type { Usuario, Rol } from '../../../core/services/usersService';
 
 export function useUsers() {
-  const [users,   setUsers]   = useState<Usuario[]>([]);
-  const [roles,   setRoles]   = useState<Rol[]>([]);
-  const [search,  setSearch]  = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const authUser = useAuthStore((s) => s.user);
+
+  const [users,     setUsers]     = useState<Usuario[]>([]);
+  const [roles,     setRoles]     = useState<Rol[]>([]);
+  const [search,    setSearch]    = useState('');
+  const [filtroRol, setFiltroRol] = useState('');
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState<string | null>(null);
 
   // Modal cambiar rol
   const [roleModal,    setRoleModal]    = useState(false);
@@ -19,31 +24,52 @@ export function useUsers() {
   const [statusModal,  setStatusModal]  = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
 
-  const loadData = async () => {
+  const yaInicio = useRef(false);
+
+  const loadData = useCallback(async (mostrarLoading: boolean) => {
+    if (mostrarLoading) setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
       const [usersData, rolesData] = await Promise.all([getUsers(), getRoles()]);
       setUsers(usersData);
       setRoles(rolesData);
     } catch {
-      setError('No se pudo cargar la lista de usuarios');
+      if (mostrarLoading) setError('No se pudo cargar la lista de usuarios');
     } finally {
-      setLoading(false);
+      if (mostrarLoading) setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { loadData(); }, []);
+  // Primera carga con spinner; siguientes enfocados: recarga silenciosa
+  useFocusEffect(useCallback(() => {
+    const esPrimera = !yaInicio.current;
+    yaInicio.current = true;
+    loadData(esPrimera);
+  }, [loadData]));
+
+  // Sincronizar avatar del usuario propio en la lista sin refetch
+  const usersConAvatarActualizado = useMemo(() => {
+    if (!authUser) return users;
+    return users.map((u) =>
+      u.id_usuario === authUser.id
+        ? { ...u, avatar_seed: authUser.avatar_seed }
+        : u
+    );
+  }, [users, authUser?.avatar_seed]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return users;
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) => u.nombre.toLowerCase().includes(q) || u.correo.toLowerCase().includes(q)
-    );
-  }, [users, search]);
+    let lista = usersConAvatarActualizado;
+    if (filtroRol) lista = lista.filter((u) => u.nombre_rol === filtroRol);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      lista = lista.filter(
+        (u) => u.nombre.toLowerCase().includes(q) || u.correo.toLowerCase().includes(q)
+      );
+    }
+    return lista;
+  }, [usersConAvatarActualizado, search, filtroRol]);
 
-  const openRoleModal = (user: Usuario) => { setSelectedUser(user); setRoleModal(true); };
+  const openRoleModal   = (user: Usuario) => { setSelectedUser(user); setRoleModal(true); };
   const openStatusModal = (user: Usuario) => { setSelectedUser(user); setStatusModal(true); };
 
   const handleChangeRole = async (rol: Rol) => {
@@ -76,7 +102,8 @@ export function useUsers() {
   };
 
   return {
-    users, roles, filtered, search, setSearch, loading, error, loadData,
+    users, roles, filtered, search, setSearch, filtroRol, setFiltroRol, loading, error,
+    loadData: () => loadData(true),
     roleModal, setRoleModal, selectedUser, savingRole, openRoleModal, handleChangeRole,
     roleError, setRoleError,
     statusModal, setStatusModal, savingStatus, openStatusModal, handleToggleStatus,

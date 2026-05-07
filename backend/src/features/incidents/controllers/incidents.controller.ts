@@ -4,6 +4,7 @@ import {
   getAllIncidentsService,
   getIncidentByIdService,
   changeStatusService,
+  aceptarIncidenteService,
   getHistoryService,
 } from '../services/incidents.service';
 import { ok, created, badRequest, notFound, forbidden, serverError } from '../../../shared/utils/response';
@@ -86,16 +87,32 @@ export const changeStatus = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+export const acceptIncident = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const updated = await aceptarIncidenteService(req.params.id, req.user!.rol);
+    if (!updated) { notFound(res, 'Incidencia no encontrada'); return; }
+    ok(res, updated, 'Incidencia aceptada');
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error al aceptar';
+    if (message === 'No tienes un servicio asignado en esta incidencia') {
+      forbidden(res, message);
+    } else {
+      serverError(res, message);
+    }
+  }
+};
+
 export const getHistory = async (req: Request, res: Response): Promise<void> => {
   try {
     const incident = await getIncidentByIdService(req.params.id);
     if (!incident) { notFound(res, 'Incidencia no encontrada'); return; }
 
     const { id, rol } = req.user!;
-    const esDueno = incident.id_usuario === id;
-    const esAdmin = rol === ROLES.ADMIN || rol === ROLES.REPRESENTANTE;
+    const esDueno     = incident.id_usuario === id;
+    const esAdmin     = rol === ROLES.ADMIN || rol === ROLES.REPRESENTANTE;
+    const esResponder = incident.servicios.some((s) => s.nombre_rol === rol);
 
-    if (!esDueno && !esAdmin) {
+    if (!esDueno && !esAdmin && !esResponder) {
       forbidden(res);
       return;
     }

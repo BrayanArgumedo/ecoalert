@@ -1,21 +1,29 @@
 import {
   View, Text, TouchableOpacity, FlatList, TextInput,
   StatusBar, Platform, Modal, ActivityIndicator,
-  KeyboardAvoidingView,
+  KeyboardAvoidingView, ScrollView, Dimensions,
 } from 'react-native';
+
+// paddingHorizontal 20 en modal + paddingHorizontal 20 en ScrollView = 40 total
+// 3 gaps de 8px entre 4 columnas = 24px
+const ICON_SIZE = Math.floor((Dimensions.get('window').width - 40 - 24) / 4);
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useEmergencyTypes } from '../../src/features/admin/hooks/useEmergencyTypes';
-import EmergencyTypeCard from '../../src/features/admin/components/EmergencyTypeCard';
+import EmergencyTypeCard, { EMERGENCY_ICONS } from '../../src/features/admin/components/EmergencyTypeCard';
+
+type IoniconsName = keyof typeof Ionicons.glyphMap;
 
 export default function EmergencyTypesScreen() {
   const {
     types, loading, error, loadTypes,
     formModal, setFormModal, editing, formNombre, setFormNombre,
-    formDesc, setFormDesc, formError, setFormError, saving,
+    formDesc, setFormDesc, formIcono, setFormIcono, formError, setFormError, saving,
     openCreate, openEdit, handleSave,
     deleteModal, setDeleteModal, deleting, targetDelete, openDelete, handleDelete,
   } = useEmergencyTypes();
+
+  const selectedIcon = EMERGENCY_ICONS.find((ic) => ic.key === formIcono);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f8faf9' }}>
@@ -89,37 +97,95 @@ export default function EmergencyTypesScreen() {
       <Modal visible={formModal} transparent animationType="slide" onRequestClose={() => !saving && setFormModal(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} activeOpacity={1} onPress={() => !saving && setFormModal(false)} />
-          <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 36 }}>
+          <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 20, paddingBottom: 36, maxHeight: '88%' }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#e5e7eb', alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={{ color: '#111827', fontSize: 18, fontWeight: '800', marginBottom: 20 }}>
+            <Text style={{ color: '#111827', fontSize: 18, fontWeight: '800', marginBottom: 20, paddingHorizontal: 20 }}>
               {editing ? 'Editar tipo' : 'Nuevo tipo de emergencia'}
             </Text>
 
-            <Text style={{ color: '#374151', fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Nombre <Text style={{ color: '#dc2626' }}>*</Text></Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1, borderColor: formError && !formNombre.trim() ? '#fca5a5' : '#e5e7eb', paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14 }}>
-              <Ionicons name="warning-outline" size={18} color="#9ca3af" />
-              <TextInput value={formNombre} onChangeText={(v) => { setFormNombre(v); setFormError(null); }} placeholder="Ej. Incendio Forestal" placeholderTextColor="#9ca3af" style={{ flex: 1, marginLeft: 10, fontSize: 14, color: '#111827' }} />
-            </View>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>
 
-            <Text style={{ color: '#374151', fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Descripción <Text style={{ color: '#9ca3af' }}>(opcional)</Text></Text>
-            <View style={{ backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, marginBottom: 20 }}>
-              <TextInput value={formDesc} onChangeText={setFormDesc} placeholder="Breve descripción del tipo de emergencia..." placeholderTextColor="#9ca3af" multiline numberOfLines={3} style={{ fontSize: 14, color: '#111827', textAlignVertical: 'top', minHeight: 64 }} />
-            </View>
-
-            {formError && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fef2f2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca', padding: 12, marginBottom: 16 }}>
-                <Ionicons name="alert-circle-outline" size={16} color="#dc2626" />
-                <Text style={{ color: '#dc2626', fontSize: 13, flex: 1 }}>{formError}</Text>
+              {/* Nombre */}
+              <Text style={{ color: '#374151', fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Nombre <Text style={{ color: '#dc2626' }}>*</Text></Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1, borderColor: formError && !formNombre.trim() ? '#fca5a5' : '#e5e7eb', paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14 }}>
+                <Ionicons name="warning-outline" size={18} color="#9ca3af" />
+                <TextInput value={formNombre} onChangeText={(v) => { setFormNombre(v); setFormError(null); }} placeholder="Ej. Incendio Forestal" placeholderTextColor="#9ca3af" style={{ flex: 1, marginLeft: 10, fontSize: 14, color: '#111827' }} />
               </View>
-            )}
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity onPress={() => setFormModal(false)} disabled={saving} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#f3f4f6', alignItems: 'center' }}>
-                <Text style={{ color: '#374151', fontWeight: '700' }}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSave} disabled={saving} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#16a34a', alignItems: 'center', shadowColor: '#16a34a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}>
-                {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700' }}>{editing ? 'Guardar' : 'Crear'}</Text>}
-              </TouchableOpacity>
+              {/* Descripción */}
+              <Text style={{ color: '#374151', fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Descripción <Text style={{ color: '#9ca3af' }}>(opcional)</Text></Text>
+              <View style={{ backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, marginBottom: 20 }}>
+                <TextInput value={formDesc} onChangeText={setFormDesc} placeholder="Breve descripción del tipo de emergencia..." placeholderTextColor="#9ca3af" multiline numberOfLines={3} style={{ fontSize: 14, color: '#111827', textAlignVertical: 'top', minHeight: 64 }} />
+              </View>
+
+              {/* Selector de ícono */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <Text style={{ color: '#374151', fontSize: 13, fontWeight: '600' }}>Ícono</Text>
+                <Text style={{ color: '#9ca3af', fontSize: 13 }}>(opcional)</Text>
+                {selectedIcon && (
+                  <View style={{ marginLeft: 'auto' as any, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: `${selectedIcon.color}18`, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 }}>
+                    <Ionicons name={selectedIcon.key} size={13} color={selectedIcon.color} />
+                    <Text style={{ color: selectedIcon.color, fontSize: 11, fontWeight: '700' }}>{selectedIcon.label}</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                {/* Opción: sin ícono */}
+                <TouchableOpacity
+                  onPress={() => setFormIcono('')}
+                  style={{
+                    width: ICON_SIZE, height: ICON_SIZE, borderRadius: 14,
+                    backgroundColor: !formIcono ? '#f0fdf4' : '#f9fafb',
+                    borderWidth: !formIcono ? 2 : 1,
+                    borderColor: !formIcono ? '#16a34a' : '#e5e7eb',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons name="ban-outline" size={20} color={!formIcono ? '#16a34a' : '#d1d5db'} />
+                  <Text style={{ fontSize: 9, color: !formIcono ? '#16a34a' : '#9ca3af', marginTop: 4, textAlign: 'center' }}>Ninguno</Text>
+                </TouchableOpacity>
+
+                {EMERGENCY_ICONS.map((ic) => {
+                  const sel = formIcono === ic.key;
+                  return (
+                    <TouchableOpacity
+                      key={ic.key}
+                      onPress={() => setFormIcono(ic.key)}
+                      style={{
+                        width: ICON_SIZE, height: ICON_SIZE, borderRadius: 14,
+                        backgroundColor: sel ? `${ic.color}18` : '#f9fafb',
+                        borderWidth: sel ? 2 : 1,
+                        borderColor: sel ? ic.color : '#e5e7eb',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name={ic.key} size={22} color={sel ? ic.color : '#9ca3af'} />
+                      <Text style={{ fontSize: 9, color: sel ? ic.color : '#9ca3af', marginTop: 4, textAlign: 'center' }}>{ic.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+            </ScrollView>
+
+            {/* Error + botones (fuera del scroll, siempre visibles) */}
+            <View style={{ paddingHorizontal: 20 }}>
+              {formError && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fef2f2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca', padding: 12, marginBottom: 16 }}>
+                  <Ionicons name="alert-circle-outline" size={16} color="#dc2626" />
+                  <Text style={{ color: '#dc2626', fontSize: 13, flex: 1 }}>{formError}</Text>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity onPress={() => setFormModal(false)} disabled={saving} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#f3f4f6', alignItems: 'center' }}>
+                  <Text style={{ color: '#374151', fontWeight: '700' }}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleSave} disabled={saving} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#16a34a', alignItems: 'center', shadowColor: '#16a34a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}>
+                  {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700' }}>{editing ? 'Guardar' : 'Crear'}</Text>}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>

@@ -1,11 +1,46 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { isAdmin, isResponder } from '../../../core/utils/roles';
+import { useRouter } from 'expo-router';
+import { isAdmin, isResponder, ROLES } from '../../../core/utils/roles';
+import { useAuthStore } from '../../../core/stores/authStore';
 import type { Incidencia } from '../../../core/services/incidentsService';
-import { changeIncidentStatus } from '../../../core/services/incidentsService';
+import { changeIncidentStatus, acceptIncident } from '../../../core/services/incidentsService';
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
+
+const MENSAJE_ACEPTACION: Record<string, { icon: IoniconsName; title: string; text: string; color: string; bg: string; border: string }> = {
+  Bombero:    { icon: 'flame-outline',  title: 'Unidad despachada', text: 'La brigada de bomberos ha sido asignada y se dirige al lugar del incidente.',      color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
+  Policia:    { icon: 'shield-outline', title: 'Unidad despachada', text: 'La unidad policial ha sido asignada y se dirige al lugar del incidente.',           color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+  Paramedico: { icon: 'medkit-outline', title: 'Unidad despachada', text: 'El equipo de asistencia médica ha sido despachado al lugar del incidente.',         color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+};
+
+const SERVICIO_STYLE: Record<string, { bg: string; border: string; color: string; icon: IoniconsName }> = {
+  Bombero:    { bg: '#fef2f2', border: '#fca5a5', color: '#dc2626', icon: 'flame-outline'  },
+  Policia:    { bg: '#eff6ff', border: '#bfdbfe', color: '#2563eb', icon: 'shield-outline' },
+  Paramedico: { bg: '#fffbeb', border: '#fde68a', color: '#d97706', icon: 'medkit-outline' },
+};
+const SERVICIO_DEFAULT = { bg: '#f3f4f6', border: 'transparent', color: '#6b7280', icon: 'construct-outline' as IoniconsName };
+
+// Alias cortos guardados en la BD (tipos sembrados originalmente) → Ionicons real
+const ICONO_ALIAS: Record<string, IoniconsName> = {
+  earthquake: 'pulse-outline',
+  flood:      'water-outline',
+  landslide:  'trending-down-outline',
+  slide:      'trending-down-outline',
+  hurricane:  'thunderstorm-outline',
+  fire:       'flame-outline',
+  storm:      'thunderstorm-outline',
+  pollution:  'cloud-outline',
+};
+
+export function resolveIcon(icono_tipo: string | null, nombre_tipo: string): IoniconsName {
+  if (icono_tipo) {
+    if (ICONO_ALIAS[icono_tipo]) return ICONO_ALIAS[icono_tipo];
+    return icono_tipo as IoniconsName; // nombre Ionicons directo (selector nuevo)
+  }
+  return TIPO_ICON[nombre_tipo] ?? 'alert-circle-outline';
+}
 
 export const TIPO_ICON: Record<string, IoniconsName> = {
   Terremoto:                 'pulse-outline',
@@ -50,13 +85,20 @@ interface IncidentCardProps {
 }
 
 export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCardProps) {
-  const admin     = isAdmin(rol);
-  const responder = isResponder(rol);
+  const router         = useRouter();
+  const currentUserId  = useAuthStore((s) => s.user?.id);
+  const admin          = isAdmin(rol);
+  const responder      = isResponder(rol);
+  const esBadgeLocalidad = rol === ROLES.REPRESENTANTE && item.id_usuario !== currentUserId;
 
-  const [statusModal, setStatusModal]   = useState(false);
-  const [errorModal,  setErrorModal]    = useState(false);
-  const [saving,      setSaving]        = useState(false);
-  const [localEstado, setLocalEstado]   = useState<Incidencia['estado']>(item.estado);
+  const miServicio   = item.servicios.find((s) => s.nombre_rol === rol);
+  const [statusModal,  setStatusModal]  = useState(false);
+  const [errorModal,   setErrorModal]   = useState(false);
+  const [saving,       setSaving]       = useState(false);
+  const [localEstado,  setLocalEstado]  = useState<Incidencia['estado']>(item.estado);
+  const [aceptado,        setAceptado]        = useState(!!miServicio?.aceptada);
+  const [accepting,       setAccepting]       = useState(false);
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
 
   const prioridad = PRIORIDAD_STYLE[item.prioridad] ?? PRIORIDAD_STYLE.normal;
   const estado    = ESTADO_STYLE[localEstado]       ?? ESTADO_STYLE.pendiente;
@@ -91,6 +133,21 @@ export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCar
     }
   };
 
+  const handleAccept = async () => {
+    setAccepting(true);
+    try {
+      await acceptIncident(item.id_incidencia);
+      setAceptado(true);
+      setShowAcceptModal(true);
+      setTimeout(() => setShowAcceptModal(false), 3500);
+      onStatusChanged?.();
+    } catch {
+      // mantener estado
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   return (
     <>
       <View style={{
@@ -108,7 +165,7 @@ export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCar
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
               <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#f0fdf4', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={TIPO_ICON[item.nombre_tipo] ?? 'alert-circle-outline'} size={18} color="#16a34a" />
+                <Ionicons name={resolveIcon(item.icono_tipo, item.nombre_tipo)} size={18} color="#16a34a" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: '#111827', fontWeight: '700', fontSize: 14 }} numberOfLines={1}>
@@ -117,6 +174,12 @@ export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCar
                 <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 2 }}>
                   {item.nombre_usuario} · {item.localidad_usuario}
                 </Text>
+                {esBadgeLocalidad && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, alignSelf: 'flex-start', backgroundColor: '#f3e8ff', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: '#e9d5ff' }}>
+                    <Ionicons name="location-outline" size={10} color="#7c3aed" />
+                    <Text style={{ color: '#7c3aed', fontSize: 10, fontWeight: '700' }}>De tu localidad</Text>
+                  </View>
+                )}
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: estado.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
@@ -159,19 +222,33 @@ export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCar
           {/* Servicios */}
           {item.servicios.length > 0 && (
             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-              {item.servicios.map((s) => (
-                <View key={s.id_servicio} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 7, backgroundColor: '#f3f4f6' }}>
-                  <Ionicons name="construct-outline" size={11} color="#6b7280" />
-                  <Text style={{ color: '#6b7280', fontSize: 11, fontWeight: '600' }}>{s.nombre}</Text>
-                </View>
-              ))}
+              {item.servicios.map((s) => {
+                const confirmado = !!s.aceptada || (s.nombre_rol === rol && aceptado);
+                const svcBase = SERVICIO_STYLE[s.nombre_rol] ?? SERVICIO_DEFAULT;
+                const svc = confirmado
+                  ? svcBase
+                  : { bg: '#f3f4f6', border: 'transparent', color: '#6b7280', icon: svcBase.icon };
+                return (
+                  <View key={s.id_servicio} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 7, backgroundColor: svc.bg, borderWidth: 1, borderColor: svc.border }}>
+                    <Ionicons name={svc.icon} size={11} color={svc.color} />
+                    <Text style={{ color: svc.color, fontSize: 11, fontWeight: '600' }}>{s.nombre}</Text>
+                  </View>
+                );
+              })}
             </View>
           )}
 
-          {/* Botón cambiar estado — admin y responders */}
-          {(admin || responder) && (
-            <>
-              <View style={{ height: 1, backgroundColor: '#f3f4f6', marginBottom: 12 }} />
+          {/* Botones de acción */}
+          <View style={{ height: 1, backgroundColor: '#f3f4f6', marginBottom: 12 }} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <ActionBtn
+              icon="eye-outline"
+              label="Ver detalle"
+              color="#15803d"
+              bg="#f0fdf4"
+              onPress={() => router.push(`/incident-detail?id=${item.id_incidencia}`)}
+            />
+            {admin && (
               <ActionBtn
                 icon="swap-horizontal-outline"
                 label="Cambiar estado"
@@ -179,8 +256,27 @@ export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCar
                 bg="#eff6ff"
                 onPress={() => setStatusModal(true)}
               />
-            </>
-          )}
+            )}
+            {responder && miServicio && localEstado !== 'resuelta' && (
+              aceptado ? (
+                <ActionBtn
+                  icon="checkmark-circle"
+                  label="Aceptado"
+                  color="#16a34a"
+                  bg="#f0fdf4"
+                />
+              ) : (
+                <ActionBtn
+                  icon={accepting ? 'sync-outline' : 'radio-button-on-outline'}
+                  label={accepting ? 'Aceptando...' : 'Aceptar'}
+                  color="#d97706"
+                  bg="#fffbeb"
+                  onPress={accepting ? undefined : handleAccept}
+                />
+              )
+            )}
+          </View>
+
         </View>
       </View>
 
@@ -236,6 +332,40 @@ export default function IncidentCard({ item, rol, onStatusChanged }: IncidentCar
               <Text style={{ color: '#9ca3af', fontSize: 13 }}>Actualizando...</Text>
             </View>
           )}
+        </View>
+      </Modal>
+
+      {/* ══ Modal confirmación de aceptación ══════════════════════════════ */}
+      <Modal visible={showAcceptModal} transparent animationType="fade" onRequestClose={() => setShowAcceptModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+          {(() => {
+            const msg = MENSAJE_ACEPTACION[rol];
+            if (!msg) return null;
+            return (
+              <View style={{ backgroundColor: '#ffffff', borderRadius: 24, padding: 28, width: '100%', maxWidth: 340, alignItems: 'center' }}>
+                <View style={{ position: 'relative', marginBottom: 20 }}>
+                  <View style={{ width: 76, height: 76, borderRadius: 22, backgroundColor: msg.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: msg.border }}>
+                    <Ionicons name={msg.icon} size={38} color={msg.color} />
+                  </View>
+                  <View style={{ position: 'absolute', bottom: -5, right: -5, width: 26, height: 26, borderRadius: 13, backgroundColor: '#f0fdf4', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' }}>
+                    <Ionicons name="checkmark" size={14} color="#16a34a" />
+                  </View>
+                </View>
+                <Text style={{ color: '#111827', fontSize: 19, fontWeight: '800', textAlign: 'center', marginBottom: 10 }}>
+                  {msg.title}
+                </Text>
+                <Text style={{ color: '#6b7280', fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 26 }}>
+                  {msg.text}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setShowAcceptModal(false)}
+                  style={{ backgroundColor: msg.color, borderRadius: 14, paddingVertical: 13, paddingHorizontal: 44 }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 14 }}>Entendido</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
         </View>
       </Modal>
 

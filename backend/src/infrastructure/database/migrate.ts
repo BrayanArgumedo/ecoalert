@@ -19,6 +19,8 @@ const migrationFiles = [
   '008_seed_data.sql',
   '009_add_telefono_usuarios.sql',
   '010_add_heridos_incidencias.sql',
+  '011_add_avatar_seed_usuarios.sql',
+  '012_add_aceptada_incidencia_servicios.sql',
 ];
 
 async function runMigrations(): Promise<void> {
@@ -35,9 +37,18 @@ async function runMigrations(): Promise<void> {
     console.log('🚀 Iniciando migraciones...\n');
 
     for (const file of migrationFiles) {
-      const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf-8');
-      await connection.query(sql);
-      console.log(`✓ ${file}`);
+      try {
+        const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf-8');
+        await connection.query(sql);
+        console.log(`✓ ${file}`);
+      } catch (err: any) {
+        // 1060 = Duplicate column, 1050 = Table already exists, 1091 = Can't DROP; key/column doesn't exist
+        if ([1060, 1050, 1091].includes(err.errno)) {
+          console.log(`⚠ ${file} — ya aplicado, omitiendo`);
+        } else {
+          throw err;
+        }
+      }
     }
 
     // Buscar el UUID del rol Admin para insertarlo en el usuario

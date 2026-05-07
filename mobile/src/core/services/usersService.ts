@@ -9,6 +9,7 @@ export interface Usuario {
   localidad: string | null;
   fecha_registro: string;
   estado: number;
+  avatar_seed: string | null;
 }
 
 export interface Rol {
@@ -38,5 +39,10 @@ export const deactivateUser = async (userId: string): Promise<void> => {
 
 export const toggleUserStatus = async (userId: string, estado: boolean): Promise<Usuario> => {
   const { data } = await api.patch(`/users/${userId}/status`, { estado });
+  return data.data;
+};
+
+export const updateAvatar = async (seed: string): Promise<Usuario> => {
+  const { data } = await api.patch('/users/me/avatar', { seed });
   return data.data;
 };

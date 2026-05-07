@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, TextInput,
   StatusBar, Platform, Modal, ActivityIndicator,
@@ -12,8 +13,9 @@ import UserCard from '../../src/features/admin/components/UserCard';
 
 export default function UsersScreen() {
   const currentUser = useAuthStore((s) => s.user);
+  const [rolModal, setRolModal] = useState(false);
   const {
-    filtered, roles, search, setSearch, loading, error, loadData,
+    filtered, roles, search, setSearch, filtroRol, setFiltroRol, loading, error, loadData,
     roleModal, setRoleModal, selectedUser, savingRole, openRoleModal, handleChangeRole,
     roleError, setRoleError,
     statusModal, setStatusModal, savingStatus, openStatusModal, handleToggleStatus,
@@ -49,6 +51,23 @@ export default function UsersScreen() {
         </View>
       </LinearGradient>
 
+      {/* ══ Botón filtro por rol ════════════════════════════════════ */}
+      {!loading && !error && (
+        <View style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }}>
+          <TouchableOpacity
+            onPress={() => setRolModal(true)}
+            activeOpacity={0.75}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, backgroundColor: filtroRol ? `${getRolColor(filtroRol)}12` : '#f9fafb', borderColor: filtroRol ? `${getRolColor(filtroRol)}50` : '#e5e7eb' }}
+          >
+            <Ionicons name="shield-half-outline" size={15} color={filtroRol ? getRolColor(filtroRol) : '#6b7280'} />
+            <Text style={{ color: filtroRol ? getRolColor(filtroRol) : '#6b7280', fontWeight: '700', fontSize: 13 }}>
+              {filtroRol || 'Todos los roles'}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={filtroRol ? getRolColor(filtroRol) : '#9ca3af'} />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ══ Contenido ════════════════════════════════════════════════ */}
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -82,7 +101,7 @@ export default function UsersScreen() {
                 <Ionicons name="people-outline" size={30} color="#86efac" />
               </View>
               <Text style={{ color: '#6b7280', fontSize: 15, fontWeight: '600' }}>
-                {search ? 'Sin resultados' : 'No hay usuarios'}
+                {search || filtroRol ? 'Sin resultados para ese filtro' : 'No hay usuarios'}
               </Text>
             </View>
           }
@@ -159,6 +178,34 @@ export default function UsersScreen() {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* ══ Modal — Filtro por rol ══════════════════════════════════ */}
+      <Modal visible={rolModal} transparent animationType="fade" onRequestClose={() => setRolModal(false)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }} activeOpacity={1} onPress={() => setRolModal(false)}>
+          <TouchableOpacity activeOpacity={1} style={{ backgroundColor: '#ffffff', borderRadius: 24, padding: 24, width: '100%', maxWidth: 360 }}>
+            <Text style={{ color: '#111827', fontSize: 17, fontWeight: '800', marginBottom: 4 }}>Filtrar por rol</Text>
+            <Text style={{ color: '#9ca3af', fontSize: 13, marginBottom: 16 }}>Selecciona un rol</Text>
+
+            {[{ nombre_rol: '', label: 'Todos los roles' }, ...roles.map((r) => ({ nombre_rol: r.nombre_rol, label: r.nombre_rol }))].map((op) => {
+              const activo = filtroRol === op.nombre_rol;
+              const color  = op.nombre_rol ? getRolColor(op.nombre_rol) : '#6b7280';
+              return (
+                <TouchableOpacity
+                  key={op.nombre_rol || 'todos'}
+                  onPress={() => { setFiltroRol(op.nombre_rol); setRolModal(false); }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 14, marginBottom: 8, backgroundColor: activo ? `${color}10` : '#f9fafb', borderWidth: activo ? 1.5 : 1, borderColor: activo ? `${color}40` : '#f3f4f6' }}
+                >
+                  <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: `${color}15`, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="shield-half-outline" size={20} color={color} />
+                  </View>
+                  <Text style={{ color: '#111827', fontSize: 14, fontWeight: '700', flex: 1 }}>{op.label}</Text>
+                  {activo && <Ionicons name="checkmark-circle" size={20} color={color} />}
+                </TouchableOpacity>
+              );
+            })}
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* ══ Modal — Confirmar toggle estado ══════════════════════════ */}

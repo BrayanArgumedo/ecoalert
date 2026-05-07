@@ -23,7 +23,7 @@ export const createEmergencyType = async (payload: {
 
 export const updateEmergencyType = async (
   id: string,
-  payload: { nombre?: string; descripcion?: string; icono?: string }
+  payload: { nombre?: string; descripcion?: string; icono?: string | null }
 ): Promise<TipoEmergencia> => {
   const { data } = await api.patch(`/emergency-types/${id}`, payload);
   return data.data;

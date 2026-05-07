@@ -3,9 +3,15 @@ export const ROLES = {
   REPRESENTANTE: 'Representante de Localidad',
   CIUDADANO: 'Ciudadano',
   BOMBERO: 'Bombero',
-  POLICIA: 'Policía',
-  PARAMEDICO: 'Paramédico',
+  POLICIA: 'Policia',
+  PARAMEDICO: 'Paramedico',
 } as const;
+
+const ROL_DISPLAY: Record<string, string> = {
+  Policia:   'Policía',
+  Paramedico: 'Paramédico',
+};
+export const getRolDisplay = (rol: string): string => ROL_DISPLAY[rol] ?? rol;
 
 export type Rol = typeof ROLES[keyof typeof ROLES];
 

@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/core/stores/authStore';
-import { isAdmin, isResponder, canCreateIncident } from '../../src/core/utils/roles';
+import { isAdmin, isResponder, canCreateIncident, ROLES } from '../../src/core/utils/roles';
 import { useIncidents, FILTROS } from '../../src/features/incidents/hooks/useIncidents';
 import IncidentCard from '../../src/features/incidents/components/IncidentCard';
 import EmptyIncidents from '../../src/features/incidents/components/EmptyIncidents';
@@ -23,7 +23,11 @@ export default function IncidentsScreen() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const headerTitle = admin ? 'Todos los incidentes' : responder ? 'Incidentes asignados' : 'Mis reportes';
+  const esRepresentante = rol === ROLES.REPRESENTANTE;
+  const headerTitle = admin ? 'Todos los incidentes'
+    : esRepresentante ? 'Mi localidad'
+    : responder       ? 'Incidentes asignados'
+    : 'Mis reportes';
   const headerSubtitle = incidencias.length > 0
     ? `${incidencias.length} registro${incidencias.length !== 1 ? 's' : ''}`
     : 'Sin incidentes';

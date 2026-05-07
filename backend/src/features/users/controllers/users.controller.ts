@@ -6,6 +6,7 @@ import {
   updateUserRoleService,
   deactivateUserService,
   toggleUserStatusService,
+  updateAvatarService,
 } from '../services/users.service';
 import { ok, badRequest, notFound, forbidden, serverError } from '../../../shared/utils/response';
 import { ROLES } from '../../../shared/constants';
@@ -93,6 +94,24 @@ export const deactivateUser = async (req: Request, res: Response): Promise<void>
   try {
     await deactivateUserService(id);
     ok(res, null, 'Usuario desactivado');
+  } catch {
+    serverError(res);
+  }
+};
+
+export const updateAvatar = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.id;
+  const { seed } = req.body as { seed: string };
+
+  if (!userId) { forbidden(res); return; }
+  if (!seed || typeof seed !== 'string' || seed.trim().length === 0) {
+    badRequest(res, 'seed es requerido'); return;
+  }
+
+  try {
+    const updated = await updateAvatarService(userId, seed.trim());
+    if (!updated) { notFound(res, 'Usuario no encontrado'); return; }
+    ok(res, updated, 'Avatar actualizado');
   } catch {
     serverError(res);
   }

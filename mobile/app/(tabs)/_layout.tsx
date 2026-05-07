@@ -84,6 +84,11 @@ export default function TabsLayout() {
         href: admin ? undefined : null,
         tabBarIcon: (p) => <TabIcon name="list-outline" {...p} />,
       }} />
+      <Tabs.Screen name="statistics" options={{
+        title: 'Estadísticas',
+        href: admin ? undefined : null,
+        tabBarIcon: (p) => <TabIcon name="bar-chart-outline" {...p} />,
+      }} />
       <Tabs.Screen name="profile" options={{
         title: 'Perfil',
         tabBarIcon: (p) => <TabIcon name="person-outline" {...p} />,

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../services/api';
+import { updateAvatar as updateAvatarApi } from '../services/usersService';
 import type { AuthState, User } from '../types/auth.types';
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -71,5 +72,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     await SecureStore.deleteItemAsync('refresh_token');
     await SecureStore.deleteItemAsync('user');
     set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
+  },
+
+  updateAvatar: async (seed: string) => {
+    await updateAvatarApi(seed);
+    // Actualizar user en estado y SecureStore
+    const userRaw = await SecureStore.getItemAsync('user');
+    if (userRaw) {
+      const user: User = { ...JSON.parse(userRaw), avatar_seed: seed };
+      await SecureStore.setItemAsync('user', JSON.stringify(user));
+      set({ user });
+    }
   },
 }));

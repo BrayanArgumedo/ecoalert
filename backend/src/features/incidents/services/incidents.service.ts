@@ -10,6 +10,7 @@ interface IncidenciaRow extends RowDataPacket {
   localidad_usuario: string;
   id_tipo_emergencia: string;
   nombre_tipo: string;
+  icono_tipo: string | null;
   descripcion: string;
   latitud: number | null;
   longitud: number | null;
@@ -26,6 +27,7 @@ interface ServicioRow extends RowDataPacket {
   id_servicio: string;
   nombre: string;
   nombre_rol: string;
+  aceptada: number;
 }
 
 interface HistorialRow extends RowDataPacket {
@@ -47,7 +49,7 @@ const SELECT_INCIDENCIA = `
   SELECT
     i.id_incidencia, i.id_usuario, u.nombre AS nombre_usuario,
     u.localidad AS localidad_usuario,
-    i.id_tipo_emergencia, t.nombre AS nombre_tipo,
+    i.id_tipo_emergencia, t.nombre AS nombre_tipo, t.icono AS icono_tipo,
     i.descripcion, i.latitud, i.longitud, i.direccion,
     i.hay_heridos, i.cantidad_heridos,
     i.prioridad, i.es_comunitario, i.estado, i.fecha_reporte
@@ -58,7 +60,7 @@ const SELECT_INCIDENCIA = `
 
 const getServiciosDeIncidencia = async (id_incidencia: string) => {
   return query<ServicioRow[]>(
-    `SELECT sp.id_servicio, sp.nombre, r.nombre_rol
+    `SELECT sp.id_servicio, sp.nombre, r.nombre_rol, ise.aceptada
      FROM incidencia_servicios ise
      JOIN servicios_publicos sp ON ise.id_servicio = sp.id_servicio
      JOIN roles r ON sp.id_rol_asignado = r.id_rol
@@ -156,7 +158,7 @@ export const getAllIncidentsService = async (
        JOIN servicios_publicos sp ON ise.id_servicio = sp.id_servicio
        JOIN roles r2 ON sp.id_rol_asignado = r2.id_rol
        WHERE r2.nombre_rol = ?
-       ORDER BY i.prioridad DESC, i.fecha_reporte ASC`,
+       ORDER BY i.prioridad DESC, i.fecha_reporte DESC`,
       [userRol]
     );
 
@@ -250,6 +252,39 @@ export const changeStatusService = async (
   );
   const servicios = await getServiciosDeIncidencia(incidentId);
   return { ...updated[0], servicios };
+};
+
+// ── Aceptar incidencia (responder acepta su servicio) ──────────────────────
+export const aceptarIncidenteService = async (incidentId: string, userRol: string) => {
+  // Verificar que el responder tiene un servicio asignado en esta incidencia
+  const servicios = await query<RolServicioRow[]>(
+    `SELECT sp.id_servicio, sp.nombre, sp.id_rol_asignado
+     FROM incidencia_servicios ise
+     JOIN servicios_publicos sp ON ise.id_servicio = sp.id_servicio
+     JOIN roles r ON sp.id_rol_asignado = r.id_rol
+     WHERE ise.id_incidencia = ? AND r.nombre_rol = ?`,
+    [incidentId, userRol]
+  );
+
+  if (servicios.length === 0) {
+    throw new Error('No tienes un servicio asignado en esta incidencia');
+  }
+
+  const id_servicio = servicios[0].id_servicio;
+
+  await execute(
+    `UPDATE incidencia_servicios
+     SET aceptada = TRUE, aceptada_en = NOW()
+     WHERE id_incidencia = ? AND id_servicio = ?`,
+    [incidentId, id_servicio]
+  );
+
+  const rows = await query<IncidenciaRow[]>(
+    `${SELECT_INCIDENCIA} WHERE i.id_incidencia = ?`,
+    [incidentId]
+  );
+  const serviciosActualizados = await getServiciosDeIncidencia(incidentId);
+  return { ...rows[0], servicios: serviciosActualizados };
 };
 
 // ── Historial de estados ────────────────────────────────────────────────────

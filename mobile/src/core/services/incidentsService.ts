@@ -4,6 +4,7 @@ export interface Servicio {
   id_servicio: string;
   nombre: string;
   nombre_rol: string;
+  aceptada: number;
 }
 
 export interface TipoEmergencia {
@@ -20,6 +21,7 @@ export interface Incidencia {
   localidad_usuario: string;
   id_tipo_emergencia: string;
   nombre_tipo: string;
+  icono_tipo: string | null;
   descripcion: string;
   latitud: number | null;
   longitud: number | null;
@@ -69,5 +71,29 @@ export const changeIncidentStatus = async (
   estado: Incidencia['estado']
 ): Promise<Incidencia> => {
   const { data } = await api.patch(`/incidents/${id}/status`, { estado });
+  return data.data;
+};
+
+export const acceptIncident = async (id: string): Promise<Incidencia> => {
+  const { data } = await api.patch(`/incidents/${id}/accept`);
+  return data.data;
+};
+
+export interface HistorialItem {
+  id_historial: string;
+  estado_anterior: string | null;
+  estado_nuevo: string;
+  id_usuario: string;
+  nombre_usuario: string;
+  fecha_cambio: string;
+}
+
+export const getIncidentById = async (id: string): Promise<Incidencia> => {
+  const { data } = await api.get(`/incidents/${id}`);
+  return data.data;
+};
+
+export const getIncidentHistory = async (id: string): Promise<HistorialItem[]> => {
+  const { data } = await api.get(`/incidents/${id}/history`);
   return data.data;
 };

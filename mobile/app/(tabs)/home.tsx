@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StatusBar, Platform, ActivityIndicator, Modal, TextInput,
+  StatusBar, Platform, ActivityIndicator, Modal, TextInput, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/core/stores/authStore';
-import { ROLES, getRolColor, isAdmin, isResponder, canCreateIncident, getGreeting } from '../../src/core/utils/roles';
+import { ROLES, getRolColor, getRolDisplay, isAdmin, isResponder, canCreateIncident, getGreeting } from '../../src/core/utils/roles';
+import { avatarUrl } from '../../src/core/utils/avatar';
 import { useHome, type FiltroPrioridad } from '../../src/features/incidents/hooks/useHome';
 import IncidentCard from '../../src/features/incidents/components/IncidentCard';
 
@@ -52,9 +53,10 @@ const STATS_RESPONDER: StatConfig[] = [
 
 // ── Prioridad opciones (solo admin) ───────────────────────────────────────────
 const PRIORIDAD_OPTS: { key: FiltroPrioridad; label: string; color: string; bg: string }[] = [
-  { key: 'todas',  label: 'Todas',  color: '#6b7280', bg: '#f3f4f6' },
-  { key: 'normal', label: 'Normal', color: '#16a34a', bg: '#f0fdf4' },
-  { key: 'alta',   label: 'Alta',   color: '#d97706', bg: '#fffbeb' },
+  { key: 'todas',   label: 'Todas',   color: '#6b7280', bg: '#f3f4f6' },
+  { key: 'normal',  label: 'Normal',  color: '#16a34a', bg: '#f0fdf4' },
+  { key: 'alta',    label: 'Alta',    color: '#d97706', bg: '#fffbeb' },
+  { key: 'critica', label: 'Crítica', color: '#dc2626', bg: '#fef2f2' },
 ];
 
 // ── Paginación estilo SIREAL ──────────────────────────────────────────────────
@@ -123,6 +125,7 @@ export default function HomeScreen() {
 
   // Stat card seleccionada (controla filtroEstado en el hook)
   const [selectedStat, setSelectedStat] = useState<StatKey | null>(null);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
 
   // Modal de prioridad (solo admin)
   const [prioModal, setPrioModal] = useState(false);
@@ -180,8 +183,19 @@ export default function HomeScreen() {
               <Text style={{ color: '#111827', fontSize: 22, fontWeight: '800', marginTop: 2 }}>{user?.nombre}</Text>
               <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 2 }}>{today.charAt(0).toUpperCase() + today.slice(1)}</Text>
             </View>
-            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: `${rolColor}20`, borderWidth: 2.5, borderColor: `${rolColor}45`, alignItems: 'center', justifyContent: 'center', shadowColor: rolColor, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}>
-              <Text style={{ color: rolColor, fontSize: 20, fontWeight: '800' }}>{user?.nombre?.[0]?.toUpperCase() ?? 'U'}</Text>
+            <View style={{ width: 50, height: 50, borderRadius: 25, overflow: 'hidden', backgroundColor: `${rolColor}20`, borderWidth: 2.5, borderColor: `${rolColor}45`, alignItems: 'center', justifyContent: 'center', shadowColor: rolColor, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}>
+              {!avatarLoaded && (
+                <Text style={{ color: rolColor, fontSize: 20, fontWeight: '800', position: 'absolute' }}>
+                  {user?.nombre?.[0]?.toUpperCase() ?? 'U'}
+                </Text>
+              )}
+              {user?.avatar_seed && (
+                <Image
+                  source={{ uri: avatarUrl(user.avatar_seed, 50) }}
+                  style={{ width: 50, height: 50, opacity: avatarLoaded ? 1 : 0 }}
+                  onLoad={() => setAvatarLoaded(true)}
+                />
+              )}
             </View>
           </View>
 
@@ -189,7 +203,7 @@ export default function HomeScreen() {
           <View style={{ flexDirection: 'row', marginTop: 14 }}>
             <View style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: `${rolColor}15`, borderWidth: 1.5, borderColor: `${rolColor}40`, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: rolColor }} />
-              <Text style={{ color: rolColor, fontSize: 12, fontWeight: '700' }}>{rol}</Text>
+              <Text style={{ color: rolColor, fontSize: 12, fontWeight: '700' }}>{getRolDisplay(rol)}</Text>
             </View>
           </View>
 

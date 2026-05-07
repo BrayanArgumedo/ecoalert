@@ -5,7 +5,7 @@ import { getIncidents, type Incidencia } from '../../../core/services/incidentsS
 export const PER_PAGE = 10;
 
 export type FiltroEstado    = 'todos'  | Incidencia['estado'];
-export type FiltroPrioridad = 'todas'  | Incidencia['prioridad'];
+export type FiltroPrioridad = 'todas' | Incidencia['prioridad'] | 'critica';
 
 export interface HomeStats {
   total:      number;
@@ -58,8 +58,9 @@ export function useHome() {
 
   // ── Filtrado ──────────────────────────────────────────────────────────
   const filtradas = incidencias.filter((i) => {
-    if (filtroEstado    !== 'todos'  && i.estado    !== filtroEstado)    return false;
-    if (filtroPrioridad !== 'todas'  && i.prioridad !== filtroPrioridad) return false;
+    if (filtroEstado !== 'todos' && i.estado !== filtroEstado) return false;
+    if (filtroPrioridad === 'critica') { if (i.hay_heridos !== 1) return false; }
+    else if (filtroPrioridad !== 'todas' && i.prioridad !== filtroPrioridad) return false;
     if (busqueda.trim()) {
       const q = busqueda.toLowerCase();
       const match =

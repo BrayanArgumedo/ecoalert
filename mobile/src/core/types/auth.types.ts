@@ -5,6 +5,7 @@ export interface User {
   rol: string;
   localidad: string;
   telefono: string;
+  avatar_seed: string | null;
 }
 
 export interface AuthState {
@@ -18,4 +19,5 @@ export interface AuthState {
   register: (nombre: string, correo: string, contrasena: string, localidad: string, telefono: string) => Promise<void>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
+  updateAvatar: (seed: string) => Promise<void>;
 }

@@ -1,6 +1,8 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getRolColor } from '../../../core/utils/roles';
+import { avatarUrl } from '../../../core/utils/avatar';
 import type { Usuario } from '../../../core/services/usersService';
 
 interface UserCardProps {
@@ -15,9 +17,10 @@ export function initials(nombre: string) {
 }
 
 export default function UserCard({ item, currentUserId, onChangeRole, onToggleStatus }: UserCardProps) {
-  const rolColor = getRolColor(item.nombre_rol);
-  const isActive = item.estado === 1;
-  const isSelf   = item.id_usuario === currentUserId;
+  const rolColor    = getRolColor(item.nombre_rol);
+  const isActive    = item.estado === 1;
+  const isSelf      = item.id_usuario === currentUserId;
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <View style={{
@@ -32,13 +35,23 @@ export default function UserCard({ item, currentUserId, onChangeRole, onToggleSt
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           {/* Avatar */}
           <View style={{
-            width: 46, height: 46, borderRadius: 14,
+            width: 46, height: 46, borderRadius: 14, overflow: 'hidden',
             backgroundColor: `${rolColor}15`, borderWidth: 1.5, borderColor: `${rolColor}30`,
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <Text style={{ color: rolColor, fontSize: 15, fontWeight: '800' }}>
-              {initials(item.nombre)}
-            </Text>
+            {/* Fallback inicial (iniciales) — siempre presente */}
+            {!imgLoaded && (
+              <Text style={{ color: rolColor, fontSize: 15, fontWeight: '800', position: 'absolute' }}>
+                {initials(item.nombre)}
+              </Text>
+            )}
+            {item.avatar_seed && (
+              <Image
+                source={{ uri: avatarUrl(item.avatar_seed, 46) }}
+                style={{ width: 46, height: 46, opacity: imgLoaded ? 1 : 0 }}
+                onLoad={() => setImgLoaded(true)}
+              />
+            )}
           </View>
 
           {/* Info */}
