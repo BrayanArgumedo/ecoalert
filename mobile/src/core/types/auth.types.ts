@@ -20,4 +20,6 @@ export interface AuthState {
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
   updateAvatar: (seed: string) => Promise<void>;
+  updateProfile: (nombre: string, telefono: string) => Promise<void>;
+  changePassword: (actual: string, nueva: string) => Promise<void>;
 }

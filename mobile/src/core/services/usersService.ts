@@ -46,3 +46,10 @@ export const updateAvatar = async (seed: string): Promise<Usuario> => {
   const { data } = await api.patch('/users/me/avatar', { seed });
   return data.data;
 };
+
+export const updateMyProfile = async (
+  userId: string,
+  dto: { nombre?: string; telefono?: string; contrasena?: string; contrasena_actual?: string }
+): Promise<void> => {
+  await api.patch(`/users/${userId}`, dto);
+};

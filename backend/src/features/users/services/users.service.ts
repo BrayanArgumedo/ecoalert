@@ -1,6 +1,7 @@
 import { RowDataPacket } from 'mysql2';
 import { query, execute } from '../../../infrastructure/database/query';
 import { ROLES } from '../../../shared/constants';
+import { hashPassword, comparePassword } from '../../../shared/utils/bcrypt';
 import type { UpdateUserDto, UpdateRoleDto } from '../dto/users.dto';
 
 // Roles que solo pueden tener 1 usuario activo en todo el sistema
@@ -21,6 +22,10 @@ interface UsuarioRow extends RowDataPacket {
 interface RolRow extends RowDataPacket {
   id_rol: string;
   nombre_rol: string;
+}
+
+interface ContrasenaRow extends RowDataPacket {
+  contrasena: string;
 }
 
 const SELECT_USUARIO = `
@@ -53,6 +58,22 @@ export const updateUserService = async (id: string, dto: UpdateUserDto) => {
   if (dto.localidad !== undefined) {
     fields.push('localidad = ?');
     values.push(dto.localidad);
+  }
+  if (dto.telefono !== undefined) {
+    fields.push('telefono = ?');
+    values.push(dto.telefono);
+  }
+  if (dto.contrasena !== undefined) {
+    if (!dto.contrasena_actual) throw new Error('La contraseña actual es requerida');
+    const hashRows = await query<ContrasenaRow[]>(
+      'SELECT contrasena FROM usuarios WHERE id_usuario = ?',
+      [id]
+    );
+    if (!hashRows[0]) throw new Error('Usuario no encontrado');
+    const valid = await comparePassword(dto.contrasena_actual, hashRows[0].contrasena);
+    if (!valid) throw new Error('La contraseña actual es incorrecta');
+    fields.push('contrasena = ?');
+    values.push(await hashPassword(dto.contrasena));
   }
 
   if (fields.length === 0) {

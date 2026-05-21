@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../services/api';
-import { updateAvatar as updateAvatarApi } from '../services/usersService';
+import { updateAvatar as updateAvatarApi, updateMyProfile as updateMyProfileApi } from '../services/usersService';
 import type { AuthState, User } from '../types/auth.types';
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
   refreshToken: null,
@@ -76,12 +76,29 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   updateAvatar: async (seed: string) => {
     await updateAvatarApi(seed);
-    // Actualizar user en estado y SecureStore
     const userRaw = await SecureStore.getItemAsync('user');
     if (userRaw) {
       const user: User = { ...JSON.parse(userRaw), avatar_seed: seed };
       await SecureStore.setItemAsync('user', JSON.stringify(user));
       set({ user });
     }
+  },
+
+  updateProfile: async (nombre, telefono) => {
+    const userId = get().user?.id;
+    if (!userId) return;
+    await updateMyProfileApi(userId, { nombre, telefono });
+    const user = get().user;
+    if (user) {
+      const updated: User = { ...user, nombre, telefono };
+      await SecureStore.setItemAsync('user', JSON.stringify(updated));
+      set({ user: updated });
+    }
+  },
+
+  changePassword: async (actual, nueva) => {
+    const userId = get().user?.id;
+    if (!userId) return;
+    await updateMyProfileApi(userId, { contrasena: nueva, contrasena_actual: actual });
   },
 }));
