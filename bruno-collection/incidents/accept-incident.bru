@@ -1,0 +1,21 @@
+meta {
+  name: Accept Incident
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/incidents/{{incident_id}}/accept
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  Marca la incidencia como aceptada por el servicio del responder autenticado.
+  Solo disponible para: Bombero, Policia, Paramedico.
+  El servicio que acepta se determina automáticamente según el rol del token.
+}

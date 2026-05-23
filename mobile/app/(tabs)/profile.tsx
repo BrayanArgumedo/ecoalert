@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, StatusBar,
   Platform, Modal, Image, FlatList, ActivityIndicator,
-  TextInput, KeyboardAvoidingView, Alert,
+  TextInput, KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +28,9 @@ export default function ProfileScreen() {
   const [editTelefono,  setEditTelefono]  = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError,  setProfileError]  = useState('');
+
+  // ── Modal éxito contraseña ───────────────────────────────────
+  const [successModal, setSuccessModal] = useState(false);
 
   // ── Cambiar contraseña ────────────────────────────────────────
   const [pwdModal,      setPwdModal]      = useState(false);
@@ -96,7 +99,7 @@ export default function ProfileScreen() {
     try {
       await changePassword(pwdActual, pwdNueva);
       setPwdModal(false);
-      Alert.alert('¡Listo!', 'Tu contraseña se actualizó correctamente.');
+      setSuccessModal(true);
     } catch (err: any) {
       setPwdError(err?.response?.data?.message ?? err?.message ?? 'Error al cambiar contraseña');
     } finally {
@@ -199,6 +202,34 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* ══ Modal éxito — contraseña actualizada ═══════════════════ */}
+      <Modal visible={successModal} transparent animationType="fade" onRequestClose={() => setSuccessModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <View style={{ backgroundColor: '#ffffff', borderRadius: 24, padding: 28, alignItems: 'center', width: '100%', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 }}>
+
+            {/* Icono animado */}
+            <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#16a34a', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="checkmark" size={32} color="white" />
+              </View>
+            </View>
+
+            <Text style={{ color: '#111827', fontSize: 20, fontWeight: '800', marginBottom: 8, textAlign: 'center' }}>
+              ¡Contraseña actualizada!
+            </Text>
+            <Text style={{ color: '#6b7280', fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
+              Tu contraseña se cambió correctamente. Úsala la próxima vez que inicies sesión.
+            </Text>
+
+            <TouchableOpacity onPress={() => setSuccessModal(false)} activeOpacity={0.85} style={{ width: '100%', borderRadius: 14, overflow: 'hidden' }}>
+              <LinearGradient colors={['#15803d', '#16a34a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingVertical: 14, alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>Entendido</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* ══ Modal selector de avatar ════════════════════════════════ */}
       <Modal visible={avatarModal} transparent animationType="slide" onRequestClose={() => !savingAvatar && setAvatarModal(false)}>

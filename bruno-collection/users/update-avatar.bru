@@ -1,0 +1,27 @@
+meta {
+  name: Update Avatar
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{base_url}}/users/me/avatar
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "seed": "adventure"
+  }
+}
+
+docs {
+  Actualiza el avatar del usuario autenticado.
+  El campo "seed" puede ser cualquier string — se usa como semilla para
+  generar el avatar con DiceBear (https://api.dicebear.com).
+}

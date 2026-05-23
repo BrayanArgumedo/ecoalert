@@ -1,0 +1,34 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{base_url}}/users/{{user_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "nombre": "Brayan Argumedo Ceballos",
+    "telefono": "3215839560"
+  }
+}
+
+docs {
+  Actualiza datos del perfil del usuario.
+  Campos disponibles (todos opcionales):
+    - nombre:           string  — Nombre completo
+    - telefono:         string  — Número de teléfono
+    - localidad:        string  — Solo Admin puede cambiar la localidad de otro usuario
+    - contrasena:       string  — Nueva contraseña (requiere contrasena_actual)
+    - contrasena_actual: string — Contraseña actual (obligatoria para cambiar contraseña)
+
+  Solo el propio usuario o un Admin pueden editar.
+}
