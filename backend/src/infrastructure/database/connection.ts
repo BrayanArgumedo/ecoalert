@@ -12,4 +12,8 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // SSL requerido para Aiven y otros proveedores en la nube
+  ...(process.env.DB_SSL === 'true' && {
+    ssl: { rejectUnauthorized: false },
+  }),
 });
