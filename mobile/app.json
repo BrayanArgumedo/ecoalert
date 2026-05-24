@@ -8,7 +8,7 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/logoEcoaler.png",
       "resizeMode": "contain",
       "backgroundColor": "#1a6b3a"
     },
@@ -25,6 +25,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "336ca900-7254-43ae-ad81-94861b1f8149"
+      }
     }
   }
 }
