@@ -52,34 +52,51 @@ Desarrollar una aplicación móvil que permita a los ciudadanos de Cereté repor
 
 ### 3.1 Tipo de arquitectura
 
-EcoAlert sigue una arquitectura **cliente-servidor** con separación clara entre el frontend móvil y el backend REST:
+EcoAlert sigue una arquitectura **cliente-servidor** con separación clara entre el frontend móvil y el backend REST. Existe tanto un entorno de **desarrollo local** como un entorno de **producción desplegado en la nube**.
 
+**Arquitectura de desarrollo local:**
 ```
 ┌─────────────────────────────────────────────────┐
 │              DISPOSITIVO MÓVIL                  │
-│   App React Native / Expo (cliente)             │
-│   - Renderiza la UI por rol                     │
-│   - Maneja estado global con Zustand            │
-│   - Comunica con API via HTTP/JSON              │
+│   App React Native / Expo (Expo Go)             │
+│   API_URL → http://192.168.X.X:3000/api/v1      │
 └────────────────────┬────────────────────────────┘
                      │ HTTP REST (Bearer Token JWT)
                      │
 ┌────────────────────▼────────────────────────────┐
-│              BACKEND (servidor)                 │
-│   Node.js + Express (API REST)                  │
-│   - Valida tokens JWT en cada request           │
-│   - Aplica control de roles (RBAC)              │
-│   - Ejecuta la lógica de negocio                │
-│   - Retorna JSON estandarizado                  │
+│         BACKEND LOCAL (Docker)                  │
+│   Node.js + Express — puerto 3000               │
 └────────────────────┬────────────────────────────┘
-                     │ mysql2 (pool de conexiones)
+                     │ mysql2
                      │
 ┌────────────────────▼────────────────────────────┐
-│         BASE DE DATOS (persistencia)            │
-│   MySQL 8.0 en contenedor Docker                │
-│   - 7 tablas relacionales                       │
-│   - Migraciones versionadas (012 archivos)      │
-│   - phpMyAdmin en puerto 8080                   │
+│         BASE DE DATOS LOCAL (Docker)            │
+│   MySQL 8.0 — puerto 3306                       │
+│   phpMyAdmin — puerto 8080                      │
+└─────────────────────────────────────────────────┘
+```
+
+**Arquitectura de producción (desplegada en la nube):**
+```
+┌─────────────────────────────────────────────────┐
+│         APK INSTALADO EN CELULAR ANDROID        │
+│   App React Native compilada (EAS Build)        │
+│   API_URL → https://ecoalert-nz2j.onrender.com  │
+└────────────────────┬────────────────────────────┘
+                     │ HTTPS REST (Bearer Token JWT)
+                     │
+┌────────────────────▼────────────────────────────┐
+│         BACKEND EN RENDER (cloud)               │
+│   Node.js + Express — plan gratuito             │
+│   https://ecoalert-nz2j.onrender.com            │
+│   Redeploy automático desde GitHub (main)       │
+└────────────────────┬────────────────────────────┘
+                     │ mysql2 + SSL (DB_SSL=true)
+                     │
+┌────────────────────▼────────────────────────────┐
+│         BASE DE DATOS EN AIVEN (cloud)          │
+│   MySQL 8.4 — DigitalOcean · San Francisco      │
+│   Conexión cifrada SSL/TLS requerida            │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -186,7 +203,7 @@ Mobile (Axios)
 | zod | 3.x | Validación de esquemas de datos de entrada |
 | dotenv | 16.x | Manejo de variables de entorno |
 
-### 4.3 Infraestructura
+### 4.3 Infraestructura — Desarrollo local
 
 | Tecnología | Rol en el proyecto |
 |---|---|
@@ -194,6 +211,15 @@ Mobile (Axios)
 | Docker Compose | Orquestación de MySQL + phpMyAdmin con un solo comando |
 | MySQL 8.0 | Base de datos relacional principal |
 | phpMyAdmin | Interfaz web para administración visual de la BD (desarrollo) |
+
+### 4.4 Infraestructura — Producción (desplegada)
+
+| Tecnología | Servicio | Rol en el proyecto |
+|---|---|---|
+| Render | PaaS (cloud) | Hosting del backend Node.js en producción. Plan gratuito con 750 horas/mes |
+| Aiven.io | DBaaS (cloud) | Base de datos MySQL 8.4 gestionada en la nube (DigitalOcean · San Francisco) |
+| EAS Build (Expo) | CI/CD móvil | Compilación del APK de Android en los servidores de Expo |
+| GitHub | Control de versiones | Repositorio fuente. Render hace redeploy automático en cada push a `main` |
 
 ---
 
@@ -989,5 +1015,129 @@ docker compose up -d    # Levanta MySQL + phpMyAdmin
 
 ---
 
+## 16. Despliegue en Producción
+
+El sistema fue desplegado completamente en la nube para permitir que el APK funcione de forma autónoma sin depender de ninguna máquina local. A continuación se describe cada componente del entorno de producción.
+
+### 16.1 Base de datos — Aiven.io
+
+**Aiven** es un servicio de bases de datos gestionadas en la nube (DBaaS). Se utilizó para alojar la base de datos MySQL de producción.
+
+| Parámetro | Valor |
+|---|---|
+| Proveedor cloud | DigitalOcean (región San Francisco) |
+| Motor | MySQL 8.4.8 |
+| Host | `mysql-19ed7646-bargumedo0720-3128.b.aivencloud.com` |
+| Puerto | `14028` |
+| SSL | Requerido (`DB_SSL=true` → `ssl: { rejectUnauthorized: false }`) |
+| Acceso visual | DBeaver (cliente de escritorio) |
+
+**Proceso de inicialización:**
+Las migraciones se ejecutaron apuntando directamente a Aiven desde la máquina local usando las credenciales de producción en el archivo `.env_produccion` (excluido del repositorio vía `.gitignore`):
+```bash
+export $(cat .env_produccion | grep -v '^#' | xargs)
+npm run migrate
+# ✓ 12 migraciones aplicadas
+# ✓ Usuario admin creado: admin@ecoalert.com / Admin123!
+```
+
+### 16.2 Backend — Render
+
+**Render** es una plataforma PaaS (Platform as a Service) que hospeda el backend Node.js en producción.
+
+| Parámetro | Valor |
+|---|---|
+| URL pública | `https://ecoalert-nz2j.onrender.com` |
+| Plan | Gratuito (750 horas/mes) |
+| Runtime | Node.js 24 |
+| Root Directory | `backend/` (monorepo) |
+| Build Command | `npm install --include=dev && npm run build` |
+| Start Command | `npm start` → `node dist/main.js` |
+| Redeploy | Automático en cada push a la rama `main` de GitHub |
+
+**Variables de entorno configuradas en Render:**
+```
+NODE_ENV=production
+PORT=3000
+DB_HOST=mysql-19ed7646-bargumedo0720-3128.b.aivencloud.com
+DB_PORT=14028
+DB_USER=avnadmin
+DB_PASSWORD=***
+DB_NAME=ecoalert_db
+DB_SSL=true
+JWT_SECRET=***
+JWT_REFRESH_SECRET=***
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=12
+```
+
+**Nota:** El plan gratuito de Render suspende el servicio tras 15 minutos de inactividad. La primera petición después de la suspensión tarda aproximadamente 50 segundos en responder mientras el servidor "despierta". Las peticiones subsiguientes funcionan con latencia normal.
+
+**Ajustes técnicos requeridos para el despliegue:**
+- Se eliminaron `baseUrl` y `paths` del `tsconfig.json` por incompatibilidad con TypeScript 5.9 (deprecación de `baseUrl` en builds de producción).
+- Se configuró `npm install --include=dev` en el Build Command para que los tipos de TypeScript (`@types/*`) estén disponibles durante la compilación.
+- Se añadió soporte SSL en el pool de conexiones MySQL (`mysql2`) activado condicionalmente con `DB_SSL=true`.
+
+### 16.3 APK Android — EAS Build (Expo)
+
+**EAS (Expo Application Services)** es el servicio de compilación de Expo que genera el APK nativo de Android sin necesidad de tener Android Studio configurado localmente.
+
+| Parámetro | Valor |
+|---|---|
+| Perfil usado | `preview` (distribución interna) |
+| Tipo de build | APK (instalable directamente, sin Play Store) |
+| SDK Expo | 54.0.0 |
+| Tiempo de build | ~18 minutos |
+| URL del build | `https://expo.dev/accounts/brayanargumedo/projects/ecoalert` |
+| Disponibilidad | 13 días desde la fecha de generación |
+
+**Configuración en `eas.json`:**
+```json
+{
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ecoalert-nz2j.onrender.com/api/v1"
+      }
+    }
+  }
+}
+```
+
+La URL del backend de producción se inyecta en tiempo de build a través de `eas.json`, de modo que el `.env` local conserva la IP del entorno de desarrollo sin ser modificado.
+
+**Comando para regenerar el APK:**
+```bash
+cd mobile
+eas build --platform android --profile preview
+```
+
+**Instrucciones de instalación para el usuario final:**
+1. Abrir el link de descarga de Expo desde un celular Android
+2. Descargar el archivo `.apk`
+3. Activar *"Instalar apps de fuentes desconocidas"* en Configuración → Seguridad (solo la primera vez)
+4. Instalar y abrir la app
+5. Iniciar sesión con las credenciales proporcionadas
+
+### 16.4 Separación de entornos
+
+El proyecto mantiene dos entornos completamente independientes:
+
+| Aspecto | Desarrollo local | Producción |
+|---|---|---|
+| Backend | Docker (puerto 3000, IP local) | Render (HTTPS) |
+| Base de datos | MySQL en Docker (puerto 3306) | Aiven MySQL (puerto 14028, SSL) |
+| Mobile | Expo Go / Docker (IP local) | APK compilado (URL de Render embebida) |
+| Variables de entorno | `.env` (local) | Variables en Render + `eas.json` |
+| Datos | Base de datos local (desarrollo) | Base de datos Aiven (producción real) |
+
+Los entornos no comparten datos ni configuración. Se puede seguir desarrollando y probando en local sin afectar el sistema de producción.
+
+---
+
 *Documento generado durante el desarrollo del TCC — Ingeniería de Software, 5.º semestre.*
 *Universidad de Cartagena · Cereté, Córdoba, Colombia · 2025*
+*Última actualización: Mayo 2026 — Sistema desplegado en producción.*
