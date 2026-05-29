@@ -1,7 +1,11 @@
-/**
- * Barrios oficiales del municipio de Cereté, Córdoba, Colombia.
- * Fuente: Plan Básico de Ordenamiento Territorial (PBOT) de Cereté 2012-2023.
- */
+// src/shared/constants/localidades.ts
+// Lista oficial de barrios y veredas del municipio de Cereté, Córdoba, Colombia.
+// Fuente: Plan Básico de Ordenamiento Territorial (PBOT) de Cereté 2012-2023.
+//
+// Se usa para validar el campo `localidad` al registrar usuarios y reportar
+// incidencias, garantizando que la ubicación pertenezca al municipio.
+// Esta misma lista se replica en el mobile para el selector de localidad.
+
 export const LOCALIDADES_CERETE: string[] = [
   '11 de Noviembre',
   '20 de Enero',
