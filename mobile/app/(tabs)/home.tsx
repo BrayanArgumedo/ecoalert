@@ -1,3 +1,8 @@
+// app/(tabs)/home.tsx
+// Pantalla principal (Dashboard). Muestra las tarjetas de resumen de
+// incidencias, filtros de estado y prioridad, búsqueda libre y paginación.
+// Toda la lógica de carga y filtrado vive en useHome.
+
 import { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,

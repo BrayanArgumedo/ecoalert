@@ -1,3 +1,8 @@
+// app/(tabs)/users.tsx
+// Pantalla de gestión de usuarios (solo Admin). Permite buscar, filtrar
+// por rol, cambiar el rol de un usuario y activar/desactivar cuentas.
+// Toda la lógica vive en useUsers.
+
 import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, FlatList, TextInput,

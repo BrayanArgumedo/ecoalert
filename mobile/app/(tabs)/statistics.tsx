@@ -1,3 +1,9 @@
+// app/(tabs)/statistics.tsx
+// Pantalla de estadísticas (solo Admin). Muestra métricas calculadas
+// localmente a partir de todas las incidencias: resumen, distribución por
+// tipo, estado, prioridad, localidad y servicios. Permite exportar el
+// informe completo como PDF usando expo-print. Lógica en useStatistics.
+
 import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,

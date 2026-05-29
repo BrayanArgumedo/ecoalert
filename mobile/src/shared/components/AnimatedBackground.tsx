@@ -1,3 +1,8 @@
+// src/shared/components/AnimatedBackground.tsx
+// Fondo animado con orbes flotantes usado en las pantallas de autenticación.
+// Cada orbe anima de forma independiente (posición Y, posición X, escala y
+// opacidad) con tiempos y delays distintos para dar sensación de profundidad.
+
 import { useEffect } from 'react';
 import { View, Dimensions } from 'react-native';
 import Animated, {

@@ -1,3 +1,7 @@
+// src/shared/components/SectionCard.tsx
+// Tarjeta contenedora con encabezado (ícono + título + subtítulo opcional).
+// Usada en el formulario de crear incidencia para agrupar campos relacionados.
+
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 

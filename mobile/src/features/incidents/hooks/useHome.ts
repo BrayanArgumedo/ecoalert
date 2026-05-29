@@ -1,3 +1,9 @@
+// src/features/incidents/hooks/useHome.ts
+// Hook de la pantalla Home. Gestiona la carga de incidencias, los filtros
+// de estado y prioridad, la búsqueda libre y la paginación del listado.
+// Primera carga muestra spinner; recargas posteriores (al volver a la tab
+// o después de cambiar estado) se hacen en silencio sin interrumpir la UI.
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { getIncidents, type Incidencia } from '../../../core/services/incidentsService';

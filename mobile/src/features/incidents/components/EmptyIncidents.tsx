@@ -1,3 +1,7 @@
+// src/features/incidents/components/EmptyIncidents.tsx
+// Estado vacío de la lista de incidencias. Si el usuario puede crear
+// incidencias y no hay ningún filtro activo, muestra un CTA para reportar.
+
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';

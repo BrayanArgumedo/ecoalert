@@ -1,3 +1,10 @@
+// src/shared/components/MapLeaflet.tsx
+// Mapa interactivo basado en Leaflet + OpenStreetMap renderizado dentro de un
+// WebView. React Native no soporta Leaflet directamente, por lo que se inyecta
+// el HTML completo con el mapa centrado en las coordenadas recibidas.
+// onScrollLock/onScrollUnlock permiten bloquear el scroll del padre
+// cuando el usuario interactúa con el mapa.
+
 import { View, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 

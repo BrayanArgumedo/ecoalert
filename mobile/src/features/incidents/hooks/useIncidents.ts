@@ -1,3 +1,9 @@
+// src/features/incidents/hooks/useIncidents.ts
+// Hook de la pantalla Incidencias (tab de responders).
+// Maneja la carga y el filtro por estado. El filtro 'critica' es local:
+// trae todas las incidencias y filtra las que tienen hay_heridos === 1,
+// ya que el backend no tiene un estado "critica" — es una vista del mobile.
+
 import { useState, useCallback } from 'react';
 import { getIncidents, type Incidencia } from '../../../core/services/incidentsService';
 

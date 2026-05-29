@@ -1,12 +1,19 @@
+// src/core/services/emergencyTypesService.ts
+// Servicio de tipos de emergencia: funciones que consumen el catálogo
+// de tipos del backend (Inundación, Incendio, Derrame químico, etc.).
+
 import { api } from './api';
 
 export interface TipoEmergencia {
   id_tipo: string;
   nombre: string;
   descripcion: string | null;
-  icono: string | null;
+  icono: string | null;  // Nombre del ícono para Ionicons en el mobile
 }
 
+// ── Llamadas a la API ─────────────────────────────────────────────────────────
+
+// Lista todos los tipos disponibles — usado para poblar el selector al reportar
 export const getEmergencyTypes = async (): Promise<TipoEmergencia[]> => {
   const { data } = await api.get('/emergency-types');
   return data.data;

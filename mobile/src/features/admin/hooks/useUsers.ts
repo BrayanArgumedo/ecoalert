@@ -1,3 +1,10 @@
+// src/features/admin/hooks/useUsers.ts
+// Hook de la pantalla de gestión de usuarios.
+// Primera carga muestra spinner; recargas al volver a la tab son silenciosas.
+// El avatar del propio Admin se sincroniza localmente con useMemo para
+// no necesitar un refetch al cambiar el seed desde la pantalla de perfil.
+// Gestiona los modales de cambiar rol y activar/desactivar cuenta.
+
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { getUsers, getRoles, changeUserRole, toggleUserStatus } from '../../../core/services/usersService';

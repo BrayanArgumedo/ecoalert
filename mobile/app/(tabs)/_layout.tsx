@@ -1,3 +1,8 @@
+// app/(tabs)/_layout.tsx
+// Layout de la navegación por pestañas. Define la barra inferior con la
+// línea degradada verde y controla qué pestañas son visibles según el rol
+// del usuario autenticado (href: null oculta la pestaña completamente).
+
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

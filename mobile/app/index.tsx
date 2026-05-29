@@ -1,3 +1,8 @@
+// app/index.tsx
+// Pantalla de entrada: redirige según el estado de autenticación.
+// Muestra un spinner mientras loadSession restaura la sesión guardada,
+// luego redirige a Home si ya está autenticado o a Login si no lo está.
+
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuthStore } from '../src/core/stores/authStore';

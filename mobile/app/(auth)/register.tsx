@@ -1,3 +1,8 @@
+// app/(auth)/register.tsx
+// Pantalla de registro de nuevos usuarios. Incluye validación de correo
+// (regex + detección de typos en el TLD) y un selector tipo bottom sheet
+// para elegir el barrio/localidad de la lista oficial de Cereté.
+
 import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator,

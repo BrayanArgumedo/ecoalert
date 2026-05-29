@@ -1,3 +1,9 @@
+// src/features/admin/components/EmergencyTypeCard.tsx
+// Tarjeta de tipo de emergencia para la gestión del Admin.
+// Resuelve el ícono en dos niveles: primero busca en TYPE_ICON_MAP
+// (alias cortos de los tipos sembrados), luego trata el valor como nombre
+// directo de Ionicons (tipos creados desde el selector nuevo).
+
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { TipoEmergencia } from '../../../core/services/emergencyTypesService';

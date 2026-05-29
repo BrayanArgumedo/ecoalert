@@ -1,3 +1,9 @@
+// src/features/admin/components/UserCard.tsx
+// Tarjeta de usuario para la pantalla de gestión del Admin.
+// Muestra avatar (con fallback a iniciales mientras carga), rol con color
+// y badge de estado. Si el usuario no es el propio Admin, muestra botones
+// para cambiar rol y activar/desactivar la cuenta.
+
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

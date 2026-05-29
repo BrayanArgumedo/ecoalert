@@ -1,3 +1,9 @@
+// app/_layout.tsx
+// Layout raíz de la aplicación (Stack global).
+// Registra todas las secciones de navegación, carga la sesión guardada
+// al iniciar y escucha el evento session-expired para redirigir al login
+// automáticamente si el refresh token falla.
+
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useAuthStore } from '../src/core/stores/authStore';

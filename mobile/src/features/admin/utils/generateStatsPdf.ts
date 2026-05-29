@@ -1,3 +1,10 @@
+// src/features/admin/utils/generateStatsPdf.ts
+// Genera el reporte PDF de estadísticas completamente en el cliente.
+// Construye un documento HTML con 7 secciones (resumen, distribución por tipo,
+// estado, prioridad, localidad, servicios y tabla completa) y lo convierte a
+// PDF usando expo-print. No requiere ningún endpoint del backend — todos los
+// datos vienen del hook useStatistics que ya los tiene calculados.
+
 import * as Print from 'expo-print';
 import type { Statistics } from '../hooks/useStatistics';
 import type { Incidencia } from '../../../core/services/incidentsService';

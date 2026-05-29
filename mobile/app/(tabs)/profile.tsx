@@ -1,3 +1,8 @@
+// app/(tabs)/profile.tsx
+// Pantalla de perfil del usuario autenticado. Permite cambiar el avatar
+// (selector de seeds de DiceBear), editar nombre y teléfono, y cambiar
+// la contraseña. Los cambios se persisten en BD y en SecureStore vía authStore.
+
 import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, StatusBar,

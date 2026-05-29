@@ -1,3 +1,9 @@
+// app/incident-detail.tsx
+// Pantalla de detalle de una incidencia. Muestra toda la información:
+// tipo, estado, prioridad, descripción, ubicación en mapa (Leaflet),
+// heridos, servicios asignados e historial de cambios de estado.
+// Se accede desde cualquier rol con permiso de ver el detalle.
+
 import { useState, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,

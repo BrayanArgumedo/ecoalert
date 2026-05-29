@@ -1,3 +1,9 @@
+// app/(tabs)/create-incident.tsx
+// Formulario de reporte de incidencias. Permite seleccionar tipo de
+// emergencia, describir el incidente, ingresar dirección (con geocodificación
+// en tiempo real), indicar heridos y elegir los servicios a notificar.
+// Toda la lógica del formulario y el envío viven en useCreateIncident.
+
 import { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,

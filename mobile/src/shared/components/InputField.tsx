@@ -1,3 +1,7 @@
+// src/shared/components/InputField.tsx
+// Campo de texto reutilizable con ícono, label, manejo de error y
+// soporte para mostrar/ocultar contraseña. Usado en las pantallas de auth.
+
 import { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, KeyboardTypeOptions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

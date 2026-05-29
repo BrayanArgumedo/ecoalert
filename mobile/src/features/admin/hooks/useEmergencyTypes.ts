@@ -1,3 +1,9 @@
+// src/features/admin/hooks/useEmergencyTypes.ts
+// Hook de la pantalla de gestión de tipos de emergencia.
+// El mismo modal de formulario sirve para crear y editar: si editing !== null
+// es una edición, si es null es una creación nueva. Al guardar, actualiza
+// la lista localmente para no tener que recargar desde el backend.
+
 import { useState, useEffect } from 'react';
 import {
   getEmergencyTypes, createEmergencyType, updateEmergencyType, deleteEmergencyType,

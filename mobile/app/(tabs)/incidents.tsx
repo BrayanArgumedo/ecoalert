@@ -1,3 +1,8 @@
+// app/(tabs)/incidents.tsx
+// Pantalla de incidencias para responders (Bombero, Policía, Paramédico).
+// Muestra solo las incidencias que requieren su servicio, con filtro de
+// estado y pull-to-refresh. Toda la lógica vive en useIncidents.
+
 import { useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StatusBar,

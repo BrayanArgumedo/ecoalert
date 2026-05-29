@@ -1,3 +1,9 @@
+// src/features/incidents/hooks/useCreateIncident.ts
+// Hook del formulario de reporte de incidencias.
+// Carga los tipos de emergencia y servicios disponibles al montar.
+// La dirección se geocodifica en tiempo real con debounce de 700ms usando
+// Nominatim (OpenStreetMap) para obtener coordenadas sin coste adicional.
+
 import { useState, useEffect, useRef } from 'react';
 import { getServices, createIncident, type Servicio } from '../../../core/services/incidentsService';
 import { getEmergencyTypes, type TipoEmergencia } from '../../../core/services/emergencyTypesService';

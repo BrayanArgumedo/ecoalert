@@ -1,3 +1,9 @@
+// src/features/incidents/components/IncidentCard.tsx
+// Tarjeta de incidencia con todas las acciones disponibles según el rol.
+// Admin: puede cambiar el estado (bottom sheet con flujo unidireccional).
+// Responders: pueden aceptar su servicio asignado (con modal de confirmación).
+// Todos: pueden ver el detalle. El estado solo avanza, nunca retrocede.
+
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

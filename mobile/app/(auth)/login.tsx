@@ -1,3 +1,8 @@
+// app/(auth)/login.tsx
+// Pantalla de inicio de sesión. Valida campos localmente antes de llamar
+// al store. Diferencia entre 401 (credenciales inválidas) y error de red
+// para mostrar mensajes precisos al usuario.
+
 import { useState } from 'react';
 import {
   View,

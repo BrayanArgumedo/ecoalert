@@ -1,3 +1,10 @@
+// src/features/admin/hooks/useStatistics.ts
+// Hook de la pantalla de estadísticas del Admin.
+// Obtiene todas las incidencias del backend y calcula las métricas localmente
+// con computeStats. El helper groupBy agrupa por cualquier campo usando una
+// función selectora y normaliza los porcentajes respecto al máximo del grupo
+// (no respecto al total) para que las barras del PDF sean visualmente útiles.
+
 import { useState, useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { getIncidents, type Incidencia } from '../../../core/services/incidentsService';

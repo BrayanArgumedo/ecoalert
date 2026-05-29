@@ -1,3 +1,9 @@
+// app/(tabs)/emergency-types.tsx
+// Pantalla de gestión del catálogo de tipos de emergencia (solo Admin).
+// Permite crear, editar y eliminar tipos con nombre, descripción e ícono.
+// El selector de ícono muestra la paleta completa de EMERGENCY_ICONS.
+// Toda la lógica vive en useEmergencyTypes.
+
 import {
   View, Text, TouchableOpacity, FlatList, TextInput,
   StatusBar, Platform, Modal, ActivityIndicator,
