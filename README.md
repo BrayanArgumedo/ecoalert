@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌿 EcoAlert
+# 🌿 EcoAlert 
 
 ### Sistema ciudadano de gestión de emergencias ambientales
 
